@@ -10,19 +10,37 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// rcpp_hello_world
-List rcpp_hello_world();
-RcppExport SEXP _pssst_rcpp_hello_world() {
+// rcpp_expand_surv
+DataFrame rcpp_expand_surv(DataFrame surv_df, NumericVector p, NumericVector l_p, CharacterVector y_p);
+RcppExport SEXP _pssst_rcpp_expand_surv(SEXP surv_dfSEXP, SEXP pSEXP, SEXP l_pSEXP, SEXP y_pSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(rcpp_hello_world());
+    Rcpp::traits::input_parameter< DataFrame >::type surv_df(surv_dfSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type l_p(l_pSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type y_p(y_pSEXP);
+    rcpp_result_gen = Rcpp::wrap(rcpp_expand_surv(surv_df, p, l_p, y_p));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rcpp_expand_surv_helper
+DataFrame rcpp_expand_surv_helper(DataFrame surv_df, double nindiv, double np);
+RcppExport SEXP _pssst_rcpp_expand_surv_helper(SEXP surv_dfSEXP, SEXP nindivSEXP, SEXP npSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DataFrame >::type surv_df(surv_dfSEXP);
+    Rcpp::traits::input_parameter< double >::type nindiv(nindivSEXP);
+    Rcpp::traits::input_parameter< double >::type np(npSEXP);
+    rcpp_result_gen = Rcpp::wrap(rcpp_expand_surv_helper(surv_df, nindiv, np));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_pssst_rcpp_hello_world", (DL_FUNC) &_pssst_rcpp_hello_world, 0},
+    {"_pssst_rcpp_expand_surv", (DL_FUNC) &_pssst_rcpp_expand_surv, 4},
+    {"_pssst_rcpp_expand_surv_helper", (DL_FUNC) &_pssst_rcpp_expand_surv_helper, 3},
     {NULL, NULL, 0}
 };
 
