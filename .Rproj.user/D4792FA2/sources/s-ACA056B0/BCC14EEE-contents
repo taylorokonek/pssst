@@ -1,0 +1,34 @@
+# pssst
+
+Functions to fit parametric survival models to survey data to estimate finite-population, synthetic child mortality across multiple time periods.
+
+## Overview
+
+**pssst** is an open-source R package containing functions to fit parametric survival models to survey data to estimate finite-population, synthetic child mortality across multiple time periods. 
+
+The package currently supports the following types of survival data:
+
+* Interval-censored
+* Right-censored
+
+The package currently supports the following parametric distributions:
+
+* Weibull
+      
+Details can be found in the functions `fit_u5mr`, `fit_binary`, and `fit_normal`, respectively.
+
+Current functions available that apply benchmarking methods to samples from a distribution include:
+
+* `benchmark_sampler`: Fully Bayesian benchmarking via a rejection sampler, described in [Okonek and Wakefield, 2022](https://arxiv.org/abs/2203.12195)
+
+* `benchmark_bayesest`: Constrained Bayes estimate approach to benchmarking, described in [Datta et al., 2011](https://doi.org/10.1007/s11749-010-0218-y)
+
+## Installation
+
+The current development version can be installed using `devtools::install_github()`:
+
+```R
+devtools::install_github(repo="taylorokonek/stbench")
+```
+
+
