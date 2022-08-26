@@ -2,7 +2,7 @@
 % Please edit documentation in R/format_dhs.R
 \name{format_dhs}
 \alias{format_dhs}
-\title{Benchmark posterior draws via a Metropolis-Hastings algorithm}
+\title{Formats DHS survey data in appropriate form for parametric survival model for synthetic children.}
 \usage{
 format_dhs(
   df,
@@ -25,18 +25,11 @@ Example: if periods are 2000-2005 and 2005-2010, \code{period_boundaries} should
 information. Can be multiple columns. Defaults to "v023".}
 }
 \value{
-A list containing:
-\itemize{
-\item fitted_list: a list of matrices of benchmarked posterior samples of fitted values in
-order arrange(time). Each matrix will have rows arranged in order arrange(region).
-\item natl_list: a list of vectors containing aggregated national-level samples that were
-accepted, in order arrange(time)
-\item prop_accepted: the proportion of samples accepted during sampling.
-}
+A dataframe containing the births recode in a format that can be input to \code{surv_synthetic}.
 }
 \description{
-Benchmarks draws from a posterior distribution using a Metropolis-Hastings approach. Takes in
-a matrix of posterior draws, a matrix of fixed effect draws, and national-level benchmark data.
+Formats DHS survey data in appropriate way for input to \code{surv_synthetic}. Takes in
+a dataframe containing a births recode file from DHS.
 }
 \author{
 Taylor Okonek

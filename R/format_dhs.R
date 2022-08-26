@@ -1,7 +1,7 @@
-#' Benchmark posterior draws via a Metropolis-Hastings algorithm
+#' Formats DHS survey data in appropriate form for parametric survival model for synthetic children.
 #' 
-#' Benchmarks draws from a posterior distribution using a Metropolis-Hastings approach. Takes in 
-#' a matrix of posterior draws, a matrix of fixed effect draws, and national-level benchmark data.
+#' Formats DHS survey data in appropriate way for input to \code{surv_synthetic}. Takes in 
+#' a dataframe containing a births recode file from DHS.
 #' 
 #' @param df a dataframe containing a births recode file from DHS, read into R beforehand using
 #' \code{readstata13::read.dta13}
@@ -11,14 +11,7 @@
 #' Example: if periods are 2000-2005 and 2005-2010, \code{period_boundaries} should be \code{c(2000,2005,2010)}.
 #' @param strata a string vector containing which column in \code{df} contains the strata 
 #' information. Can be multiple columns. Defaults to "v023".
-#' @return A list containing: 
-#' \itemize{
-#' \item fitted_list: a list of matrices of benchmarked posterior samples of fitted values in 
-#' order arrange(time). Each matrix will have rows arranged in order arrange(region).
-#' \item natl_list: a list of vectors containing aggregated national-level samples that were 
-#' accepted, in order arrange(time)
-#' \item prop_accepted: the proportion of samples accepted during sampling. 
-#' } 
+#' @return A dataframe containing the births recode in a format that can be input to \code{surv_synthetic}.
 #' 
 #' @author Taylor Okonek
 #' @export format_dhs
@@ -43,6 +36,14 @@ format_dhs <- function(df,
   births <- df_expand(surv_df = births, 
                       period_boundaries = period_boundaries, 
                       survey_date = survey_year)
+  
+  # remove people who are right-censored at age 0 (absolute nonsense)
+  num_nonsense <- births %>% filter(I_i == 0 & t_i == 0) %>% nrow()
+  message(paste0("Removing ", num_nonsense, " children right-censored at age 0 "))
+  births <- births %>% filter(!(I_i == 0 & t_i == 0))
+  
+  # divide weights by constant because DHS
+  births <- births %>% mutate(weights = weights/1e6)
   
   return(births)
 }
