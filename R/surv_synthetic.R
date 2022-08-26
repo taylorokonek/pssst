@@ -23,9 +23,16 @@
 #' @param only_scale boolean for varying only the scale parameter across time period. Defaults to
 #' \code{FALSE}.
 #' @param dist distribution. Currently only supports "weibull"
-#' @return A named listed containing: (1) a dataframe of results, (2) the output from \code{optim},
-#' (3) the gradient evaluated at the MLE, (4) the survey design object, (5) runtime for likelihood
-#' optimization
+#' @return A list containing: 
+#' \itemize{
+#' \item result: a dataframe of summarized results
+#' order arrange(time). Each matrix will have rows arranged in order arrange(region).
+#' \item optim: the output from \code{optim}
+#' \item grad: the gradient evaluated at the MLE
+#' \item variance: the finite population variance-covariance matrix
+#' \item design: the survey design object
+#' \item runtime: runtime for likelihood optimization
+#' } 
 #' 
 #' @author Taylor Okonek
 #' @export surv_synthetic
@@ -132,6 +139,7 @@ surv_synthetic <- function(df,
   ret_lst <- list(result = ret_df,
                   optim = optim_res,
                   grad = test_scores,
+                  variance = vmat,
                   design = design,
                   runtime = end_time - start_time)
   

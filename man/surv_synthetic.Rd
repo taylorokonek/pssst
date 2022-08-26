@@ -61,9 +61,16 @@ boundary of a time period in \code{df}}
 \item{dist}{distribution. Currently only supports "weibull"}
 }
 \value{
-A named listed containing: (1) a dataframe of results, (2) the output from \code{optim},
-(3) the gradient evaluated at the MLE, (4) the survey design object, (5) runtime for likelihood
-optimization
+A list containing:
+\itemize{
+\item result: a dataframe of summarized results
+order arrange(time). Each matrix will have rows arranged in order arrange(region).
+\item optim: the output from \code{optim}
+\item grad: the gradient evaluated at the MLE
+\item variance: the finite population variance-covariance matrix
+\item design: the survey design object
+\item runtime: runtime for likelihood optimization
+}
 }
 \description{
 Fits a parametric survival model to DHS data (formatted from \code{format_dhs}) to get survey-weighted
