@@ -20,7 +20,12 @@
 #' @param t_i column corresponding to age at right-censoring, if right-censored, in \code{df}
 #' @param t_0i column corresponding to lower bound of interval, if interval-censored, in \code{df}
 #' @param t_1i column corresponding to upper bound of interval, if interval-censored, in \code{df}
-#' @return TBD
+#' @param only_scale boolean for varying only the scale parameter across time period. Defaults to
+#' \code{FALSE}.
+#' @param dist distribution. Currently only supports "weibull"
+#' @return A named listed containing: (1) a dataframe of results, (2) the output from \code{optim},
+#' (3) the gradient evaluated at the MLE, (4) the survey design object, (5) runtime for likelihood
+#' optimization
 #' 
 #' @author Taylor Okonek
 #' @export surv_synthetic
@@ -38,18 +43,97 @@ surv_synthetic <- function(df,
                            A_i = "A_i",
                            t_i = "t_i",
                            t_0i = "t_0i",
-                           t_1i = "t_1i") {
+                           t_1i = "t_1i",
+                           only_scale = FALSE,
+                           dist = "weibull") {
+  
+  # error checking
+  if (dist != "weibull") {
+    stop("surv_synthetic currently only supports weibull distribution")
+  }
   
   # make new df with appropriate columns
   temp <- df[,c(individual, household, cluster, strata, weights, p, a_pi, l_p,
                 I_i, A_i, t_i, t_0i, t_1i)]
   df <- temp
   
+  # get number of periods
+  n_periods <- length(unique(df$p))
+  
   # pivot wider
   df <- df %>%
     pivot_wider(id_cols = c(individual, household, cluster, strata, weights, I_i, A_i, t_i, t_0i, t_1i),
                 names_from = p,
                 values_from = c(a_pi, l_p))
+  
+  # get column name indicators for a_pi and l_p
+  a_pi_cols <- paste0("a_pi_",1:n_periods)
+  l_p_cols <- paste0("l_p_",1:n_periods)
+  
+  # fit model
+  if (only_scale) {
+    message("fitting model")
+    start_time <- Sys.time()
+    optim_res <- optim(par = c(rep(-1,1), rep(15, n_periods)),
+                       fn = optim_fn,
+                       data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
+                       weights = df$weights,
+                       shape_par_ids = 1,
+                       method = "BFGS",
+                       hessian = TRUE)
+    end_time <- Sys.time()
+    end_time - start_time
+    
+    message("computing finite population variance")
+    test_scores <- rcpp_gradient_multi(df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
+                                       optim_res$par[1], optim_res$par[2:length(optim_res$par)])
+  } else {
+    start_time <- Sys.time()
+    optim_res <- optim(par = c(rep(-1,n_periods), rep(15, n_periods)),
+                       fn = optim_fn,
+                       data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
+                       weights = df$weights,
+                       shape_par_ids = 1:n_periods,
+                       method = "BFGS",
+                       hessian = TRUE)
+    end_time <- Sys.time()
+    end_time - start_time
+    
+    message("computing finite population variance")
+    test_scores <- rcpp_gradient_multi(df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
+                                       optim_res$par[1:n_periods], optim_res$par[(n_periods + 1):(n_periods * 2)])
+  }
+  
+  # get finite pop variances
+  est <- optim_res$par
+  test_invinf <- solve(-optim_res$hessian)
+  infl_fns <- test_scores %*% test_invinf
+  design <- survey::svydesign(ids=~cluster+household, 
+                      strata = ~strata,
+                      weights = ~weights, 
+                      data = df)
+  vmat <- vcov(svytotal(infl_fns, design))
+  
+  # organize results to return
+  if (only_scale) {
+    ret_df <- data.frame(period = 1:n_periods,
+               log_shape_mean = rep(est[1], n_periods),
+               log_scale_mean = est[2:length(est)],
+               log_shape_var = rep(vmat[1,1], n_periods),
+               log_scale_var = diag(vmat)[2:length(est)])
+  } else {
+    ret_df <- data.frame(period = 1:n_periods,
+                         log_shape_mean = est[1:n_periods],
+                         log_scale_mean = est[(n_periods + 1):(n_periods*2)],
+                         log_shape_var = diag(vmat)[1:n_periods],
+                         log_scale_var = diag(vmat)[(n_periods + 1):(n_periods*2)])
+  }
 
-  return(df)
+  ret_lst <- list(result = ret_df,
+                  optim = optim_res,
+                  grad = test_scores,
+                  design = design,
+                  runtime = end_time - start_time)
+  
+  return(ret_lst)
 }

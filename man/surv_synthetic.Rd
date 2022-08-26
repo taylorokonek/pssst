@@ -18,7 +18,9 @@ surv_synthetic(
   A_i = "A_i",
   t_i = "t_i",
   t_0i = "t_0i",
-  t_1i = "t_1i"
+  t_1i = "t_1i",
+  only_scale = FALSE,
+  dist = "weibull"
 )
 }
 \arguments{
@@ -52,9 +54,16 @@ boundary of a time period in \code{df}}
 \item{t_0i}{column corresponding to lower bound of interval, if interval-censored, in \code{df}}
 
 \item{t_1i}{column corresponding to upper bound of interval, if interval-censored, in \code{df}}
+
+\item{only_scale}{boolean for varying only the scale parameter across time period. Defaults to
+\code{FALSE}.}
+
+\item{dist}{distribution. Currently only supports "weibull"}
 }
 \value{
-TBD
+A named listed containing: (1) a dataframe of results, (2) the output from \code{optim},
+(3) the gradient evaluated at the MLE, (4) the survey design object, (5) runtime for likelihood
+optimization
 }
 \description{
 Fits a parametric survival model to DHS data (formatted from \code{format_dhs}) to get survey-weighted

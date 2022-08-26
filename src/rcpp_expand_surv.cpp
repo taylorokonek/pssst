@@ -1,6 +1,6 @@
 //sum.cpp
 #include <Rcpp.h>
-#include "internal_helpers.h"
+#include "rcpp_expand_surv_helpers.h"
 #include <algorithm> 
 #include <string.h>
 #include <Rmath.h>

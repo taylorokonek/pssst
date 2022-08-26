@@ -9,3 +9,11 @@ rcpp_expand_surv_helper <- function(surv_df, nindiv, np) {
     .Call(`_pssst_rcpp_expand_surv_helper`, surv_df, nindiv, np)
 }
 
+rcpp_gradient_multi <- function(x_df, log_shapes, log_scales) {
+    .Call(`_pssst_rcpp_gradient_multi`, x_df, log_shapes, log_scales)
+}
+
+rcpp_loglik_multi <- function(x_df, log_shapes, log_scales) {
+    .Call(`_pssst_rcpp_loglik_multi`, x_df, log_shapes, log_scales)
+}
+
