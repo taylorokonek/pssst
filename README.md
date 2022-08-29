@@ -13,6 +13,7 @@ The package currently supports the following types of survival data:
 
 The package currently supports the following parametric distributions:
 
+* Exponential
 * Weibull
 
 ## Installation

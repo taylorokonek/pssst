@@ -11,7 +11,19 @@
 #' @noRd
 #' @keywords internal
 optim_fn <- function(data, weights, par, shape_par_ids, dist) {
-  -sum(rcpp_loglik_multi(data, par[shape_par_ids], par[-shape_par_ids], dist) * weights)
+  if (dist == 1) {
+    -sum(rcpp_loglik_multi(x_df = data, 
+                           log_shapes = par[shape_par_ids], 
+                           log_scales = par[-shape_par_ids], 
+                           dist = dist) * weights)
+  } else if (dist == 0) {
+    # can fit exponential likelihood using weibull code with shapes == 1
+    -sum(rcpp_loglik_multi(x_df = data, 
+                           log_shapes = 0, 
+                           log_scales = par, 
+                           dist = 1) * weights)
+  }
+  
 }
 
 #' CDF for weibull distribution
@@ -46,6 +58,19 @@ p_weibull <- function(x, log_shape, log_scale, log = FALSE) {
 d_p_weibull_log_scale <- function(x, log_shape, log_scale) {
   -(exp(-(x/exp(log_scale))^(exp(log_shape))) * ((x/exp(log_scale))^((exp(log_shape)) - 
                                                                        1) * ((exp(log_shape)) * (x * exp(log_scale)/exp(log_scale)^2))))
+}
+
+#' derivative of CDF for exponential distribution wrt log_scale
+#' 
+#' @param x value
+#' @param log_scale log_scale
+#' @return derivative wrt log_scale of exponential cdf 
+#' 
+#' @author Taylor Okonek
+#' @noRd
+#' @keywords internal
+d_p_exponential_log_scale <- function(x, log_scale) {
+  -(exp(-(x/exp(log_scale))) * (x * exp(log_scale)/exp(log_scale)^2))
 }
 
 #' derivative of CDF for weibull distribution wrt log_shape
@@ -93,6 +118,22 @@ p_weibull_deltamethod <- function(x, par, vmat, shape_par_ids) {
   return(delta_vmat)
 }
 
+#' cdf delta method for exponential distribution 
+#' can be used for u5mr (x = 60), imr (x = 12), nmr (x = 1), etc.
+#' 
+#' @param x value
+#' @param par c(log_scale)
+#' @param vmat vcov matrix for par
+#' @return delta method variance for cdf evaluated at x
+#' 
+#' @author Taylor Okonek
+#' @noRd
+#' @keywords internal
+p_exponential_deltamethod <- function(x, par, vmat) {
+  grad <- diag(length(par)) * d_p_exponential_log_scale(x, par)
+  delta_vmat <- t(grad) %*% vmat %*% grad
+  return(delta_vmat)
+}
 
 
 

@@ -58,7 +58,7 @@ boundary of a time period in \code{df}}
 \item{only_scale}{boolean for varying only the scale parameter across time period. Defaults to
 \code{FALSE}. This option is only available for dist = "weibull"}
 
-\item{dist}{distribution. Currently only supports "weibull"}
+\item{dist}{distribution. Currently supports "weibull", "exponential"}
 }
 \value{
 A list containing:
