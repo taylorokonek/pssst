@@ -97,8 +97,10 @@ surv_synthetic <- function(df,
     end_time - start_time
     
     message("computing finite population variance")
-    test_scores <- rcpp_gradient_multi(df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
-                                       optim_res$par[1], optim_res$par[2:length(optim_res$par)])
+    test_scores <- rcpp_gradient_multi(x_df = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
+                                       log_shapes = optim_res$par[1], 
+                                       log_scales = optim_res$par[2:length(optim_res$par)], 
+                                       dist = dist)
   } else {
     start_time <- Sys.time()
     optim_res <- optim(par = c(rep(-1,n_periods), rep(15, n_periods)),
@@ -113,8 +115,10 @@ surv_synthetic <- function(df,
     end_time - start_time
     
     message("computing finite population variance")
-    test_scores <- rcpp_gradient_multi(df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
-                                       optim_res$par[1:n_periods], optim_res$par[(n_periods + 1):(n_periods * 2)])
+    test_scores <- rcpp_gradient_multi(x_df = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
+                                       log_shapes = optim_res$par[1:n_periods], 
+                                       log_scales = optim_res$par[(n_periods + 1):(n_periods * 2)], 
+                                       dist = dist)
   }
   
   # get finite pop variances
