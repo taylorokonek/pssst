@@ -56,7 +56,7 @@ boundary of a time period in \code{df}}
 \item{t_1i}{column corresponding to upper bound of interval, if interval-censored, in \code{df}}
 
 \item{only_scale}{boolean for varying only the scale parameter across time period. Defaults to
-\code{FALSE}.}
+\code{FALSE}. This option is only available for dist = "weibull"}
 
 \item{dist}{distribution. Currently only supports "weibull"}
 }

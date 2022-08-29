@@ -21,7 +21,7 @@
 #' @param t_0i column corresponding to lower bound of interval, if interval-censored, in \code{df}
 #' @param t_1i column corresponding to upper bound of interval, if interval-censored, in \code{df}
 #' @param only_scale boolean for varying only the scale parameter across time period. Defaults to
-#' \code{FALSE}.
+#' \code{FALSE}. This option is only available for dist = "weibull"
 #' @param dist distribution. Currently only supports "weibull"
 #' @return A list containing: 
 #' \itemize{
@@ -58,6 +58,7 @@ surv_synthetic <- function(df,
   if (dist != "weibull") {
     stop("surv_synthetic currently only supports weibull distribution")
   }
+  dist <- 1
   
   # make new df with appropriate columns
   temp <- df[,c(individual, household, cluster, strata, weights, p, a_pi, l_p,
@@ -89,6 +90,7 @@ surv_synthetic <- function(df,
                        data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
                        weights = df$weights,
                        shape_par_ids = 1,
+                       dist = dist,
                        method = "BFGS",
                        hessian = TRUE)
     end_time <- Sys.time()
@@ -104,6 +106,7 @@ surv_synthetic <- function(df,
                        data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
                        weights = df$weights,
                        shape_par_ids = 1:n_periods,
+                       dist = dist,
                        method = "BFGS",
                        hessian = TRUE)
     end_time <- Sys.time()

@@ -38,28 +38,30 @@ BEGIN_RCPP
 END_RCPP
 }
 // rcpp_gradient_multi
-NumericVector rcpp_gradient_multi(DataFrame x_df, NumericVector log_shapes, NumericVector log_scales);
-RcppExport SEXP _pssst_rcpp_gradient_multi(SEXP x_dfSEXP, SEXP log_shapesSEXP, SEXP log_scalesSEXP) {
+NumericVector rcpp_gradient_multi(DataFrame x_df, NumericVector log_shapes, NumericVector log_scales, int dist);
+RcppExport SEXP _pssst_rcpp_gradient_multi(SEXP x_dfSEXP, SEXP log_shapesSEXP, SEXP log_scalesSEXP, SEXP distSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< DataFrame >::type x_df(x_dfSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type log_shapes(log_shapesSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type log_scales(log_scalesSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcpp_gradient_multi(x_df, log_shapes, log_scales));
+    Rcpp::traits::input_parameter< int >::type dist(distSEXP);
+    rcpp_result_gen = Rcpp::wrap(rcpp_gradient_multi(x_df, log_shapes, log_scales, dist));
     return rcpp_result_gen;
 END_RCPP
 }
 // rcpp_loglik_multi
-NumericVector rcpp_loglik_multi(DataFrame x_df, NumericVector log_shapes, NumericVector log_scales);
-RcppExport SEXP _pssst_rcpp_loglik_multi(SEXP x_dfSEXP, SEXP log_shapesSEXP, SEXP log_scalesSEXP) {
+NumericVector rcpp_loglik_multi(DataFrame x_df, NumericVector log_shapes, NumericVector log_scales, int dist);
+RcppExport SEXP _pssst_rcpp_loglik_multi(SEXP x_dfSEXP, SEXP log_shapesSEXP, SEXP log_scalesSEXP, SEXP distSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< DataFrame >::type x_df(x_dfSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type log_shapes(log_shapesSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type log_scales(log_scalesSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcpp_loglik_multi(x_df, log_shapes, log_scales));
+    Rcpp::traits::input_parameter< int >::type dist(distSEXP);
+    rcpp_result_gen = Rcpp::wrap(rcpp_loglik_multi(x_df, log_shapes, log_scales, dist));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -67,8 +69,8 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_pssst_rcpp_expand_surv", (DL_FUNC) &_pssst_rcpp_expand_surv, 4},
     {"_pssst_rcpp_expand_surv_helper", (DL_FUNC) &_pssst_rcpp_expand_surv_helper, 3},
-    {"_pssst_rcpp_gradient_multi", (DL_FUNC) &_pssst_rcpp_gradient_multi, 3},
-    {"_pssst_rcpp_loglik_multi", (DL_FUNC) &_pssst_rcpp_loglik_multi, 3},
+    {"_pssst_rcpp_gradient_multi", (DL_FUNC) &_pssst_rcpp_gradient_multi, 4},
+    {"_pssst_rcpp_loglik_multi", (DL_FUNC) &_pssst_rcpp_loglik_multi, 4},
     {NULL, NULL, 0}
 };
 

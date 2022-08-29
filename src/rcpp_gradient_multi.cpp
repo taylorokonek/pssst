@@ -8,8 +8,12 @@
 using namespace Rcpp;
 
 // Only works for interval- and right-censored data, no exactly observed times or left-censoring
+// distributions:
+// 0 = Exponential
+// 1 = Weibull
+
 // [[Rcpp::export]]
-NumericVector rcpp_gradient_multi(DataFrame x_df, NumericVector log_shapes, NumericVector log_scales) {
+NumericVector rcpp_gradient_multi(DataFrame x_df, NumericVector log_shapes, NumericVector log_scales, int dist) {
     // Convert dataframe to matrix
   NumericMatrix x = testDFtoNM1_2(x_df);
   
@@ -69,16 +73,16 @@ NumericVector rcpp_gradient_multi(DataFrame x_df, NumericVector log_shapes, Nume
       // if only one shape parameter, gradient is a bit more complex
       if (single_shape) {
         // evaluate gradient with respect to log_shape
-      ret_mat(i, 0) = - hazard_gradient_log_shape(x(i, 2), a_pi[U_p], l_p[U_p], log_shape_internal[0], log_scales[U_p]);
+        ret_mat(i, 0) = - hazard_gradient_log_shape(x(i, 2), a_pi[U_p], l_p[U_p], log_shape_internal[0], log_scales[U_p], dist);
 
       // evaluate gradient with respect to log_scale
-      for (int j = 0; j < log_scales.length(); j++) {
-        if (U_p[j]) {
-          ret_mat(i, j+1) = - hazard_gradient_log_scale(x(i, 2), a_pi[j], l_p[j], log_shape_internal[0], log_scales[j]);
-        } else {
-          ret_mat(i, j+1) = 0;
+        for (int j = 0; j < log_scales.length(); j++) {
+          if (U_p[j]) {
+            ret_mat(i, j+1) = - hazard_gradient_log_scale(x(i, 2), a_pi[j], l_p[j], log_shape_internal[0], log_scales[j], dist);
+          } else {
+            ret_mat(i, j+1) = 0;
+          }
         }
-      }
 
       // if multiple shape parameters, gradient is more simple
       } else {
@@ -86,20 +90,20 @@ NumericVector rcpp_gradient_multi(DataFrame x_df, NumericVector log_shapes, Nume
         // evaluate gradient with respect to log_shape
         for (int j = 0; j < log_shape_internal.length(); j++) {
           if (U_p[j]) {
-          ret_mat(i, j) = - hazard_gradient_log_shape_multi(x(i, 2), a_pi[j], l_p[j], log_shape_internal[j], log_scales[j]);
-        } else {
-          ret_mat(i, j) = 0;
-        }
+            ret_mat(i, j) = - hazard_gradient_log_shape_multi(x(i, 2), a_pi[j], l_p[j], log_shape_internal[j], log_scales[j], dist);
+          } else {
+            ret_mat(i, j) = 0;
+          }
         }
 
         // evaluate gradient with respect to log_scale
         for (int j = 0; j < log_scales.length(); j++) {
-        if (U_p[j]) {
-          ret_mat(i, j + log_shape_internal.length()) = - hazard_gradient_log_scale(x(i, 2), a_pi[j], l_p[j], log_shape_internal[j], log_scales[j]);
-        } else {
-          ret_mat(i, j + log_shape_internal.length()) = 0;
+          if (U_p[j]) {
+            ret_mat(i, j + log_shape_internal.length()) = - hazard_gradient_log_scale(x(i, 2), a_pi[j], l_p[j], log_shape_internal[j], log_scales[j], dist);
+          } else {
+            ret_mat(i, j + log_shape_internal.length()) = 0;
+          }
         }
-      }
 
       }
       
@@ -114,43 +118,43 @@ NumericVector rcpp_gradient_multi(DataFrame x_df, NumericVector log_shapes, Nume
       H_i0 = 0;
       for (j = 0; j < U_p.length(); j++) {
         if (U_p[j]) {
-          H_i0 += rcpp_hazard_weibull_integral_2(std::max(a_pi[j], 0.0), std::min(x(i, 3), a_pi[j] + l_p[j]), log_shape_internal[j], log_scales[j]);
+          H_i0 += rcpp_hazard_integral_2(std::max(a_pi[j], 0.0), std::min(x(i, 3), a_pi[j] + l_p[j]), log_shape_internal[j], log_scales[j], dist);
         }
       }
 
       if (single_shape) {
         // evaluate gradient with respect to log_shape at t_0
-      grad_t0(0) = hazard_gradient_log_shape(x(i, 3), a_pi[U_p], l_p[U_p], log_shape_internal[0], log_scales[U_p]);
+        grad_t0(0) = hazard_gradient_log_shape(x(i, 3), a_pi[U_p], l_p[U_p], log_shape_internal[0], log_scales[U_p], dist);
 
       // evaluate gradient with respect to log_scale at t_0
-      for (int j = 0; j < log_scales.length(); j++) {
-        if (U_p[j]) {
-          grad_t0(j+1) = hazard_gradient_log_scale(x(i, 3), a_pi[j], l_p[j], log_shape_internal[0], log_scales[j]);
-        } else {
-          grad_t0(j+1) = 0;
+        for (int j = 0; j < log_scales.length(); j++) {
+          if (U_p[j]) {
+            grad_t0(j+1) = hazard_gradient_log_scale(x(i, 3), a_pi[j], l_p[j], log_shape_internal[0], log_scales[j], dist);
+          } else {
+            grad_t0(j+1) = 0;
+          }
         }
-      }
-    } else {
+      } else {
 
          // evaluate gradient with respect to log_shape at t_0
-      for (int j = 0; j < log_shape_internal.length(); j++) {
-        if (U_p[j]) {
-          grad_t0(j) = hazard_gradient_log_shape_multi(x(i, 3), a_pi[j], l_p[j], log_shape_internal[j], log_scales[j]);
-        } else {
-          grad_t0(j) = 0;
+        for (int j = 0; j < log_shape_internal.length(); j++) {
+          if (U_p[j]) {
+            grad_t0(j) = hazard_gradient_log_shape_multi(x(i, 3), a_pi[j], l_p[j], log_shape_internal[j], log_scales[j], dist);
+          } else {
+            grad_t0(j) = 0;
+          }
         }
-      }
 
       // evaluate gradient with respect to log_scale at t_0
-      for (int j = 0; j < log_scales.length(); j++) {
-        if (U_p[j]) {
-          grad_t0(j+log_shape_internal.length()) = hazard_gradient_log_scale(x(i, 3), a_pi[j], l_p[j], log_shape_internal[j], log_scales[j]);
-        } else {
-          grad_t0(j+log_shape_internal.length()) = 0;
+        for (int j = 0; j < log_scales.length(); j++) {
+          if (U_p[j]) {
+            grad_t0(j+log_shape_internal.length()) = hazard_gradient_log_scale(x(i, 3), a_pi[j], l_p[j], log_shape_internal[j], log_scales[j], dist);
+          } else {
+            grad_t0(j+log_shape_internal.length()) = 0;
+          }
         }
-      }
 
-    }
+      }
 
       
       // identify which periods this person lived in for t_1
@@ -161,44 +165,44 @@ NumericVector rcpp_gradient_multi(DataFrame x_df, NumericVector log_shapes, Nume
       H_i1 = 0;
       for (j = 0; j < U_p.length(); j++) {
         if (U_p[j]) {
-          H_i1 += rcpp_hazard_weibull_integral_2(std::max(a_pi[j], 0.0), std::min(x(i, 4), a_pi[j] + l_p[j]), log_shape_internal[j], log_scales[j]);
+          H_i1 += rcpp_hazard_integral_2(std::max(a_pi[j], 0.0), std::min(x(i, 4), a_pi[j] + l_p[j]), log_shape_internal[j], log_scales[j], dist);
         }
       }
 
       
       if (single_shape) {
         // evaluate gradient with respect to log_shape at t_0
-      grad_t1(0) = hazard_gradient_log_shape(x(i, 4), a_pi[U_p], l_p[U_p], log_shape_internal[0], log_scales[U_p]);
+        grad_t1(0) = hazard_gradient_log_shape(x(i, 4), a_pi[U_p], l_p[U_p], log_shape_internal[0], log_scales[U_p], dist);
 
       // evaluate gradient with respect to log_scale at t_0
-      for (int j = 0; j < log_scales.length(); j++) {
-        if (U_p[j]) {
-          grad_t1(j+1) = hazard_gradient_log_scale(x(i, 4), a_pi[j], l_p[j], log_shape_internal[0], log_scales[j]);
-        } else {
-          grad_t1(j+1) = 0;
+        for (int j = 0; j < log_scales.length(); j++) {
+          if (U_p[j]) {
+            grad_t1(j+1) = hazard_gradient_log_scale(x(i, 4), a_pi[j], l_p[j], log_shape_internal[0], log_scales[j], dist);
+          } else {
+            grad_t1(j+1) = 0;
+          }
         }
-      }
-    } else {
+      } else {
 
          // evaluate gradient with respect to log_shape at t_0
-      for (int j = 0; j < log_shape_internal.length(); j++) {
-        if (U_p[j]) {
-          grad_t1(j) = hazard_gradient_log_shape_multi(x(i, 4), a_pi[j], l_p[j], log_shape_internal[j], log_scales[j]);
-        } else {
-          grad_t1(j) = 0;
+        for (int j = 0; j < log_shape_internal.length(); j++) {
+          if (U_p[j]) {
+            grad_t1(j) = hazard_gradient_log_shape_multi(x(i, 4), a_pi[j], l_p[j], log_shape_internal[j], log_scales[j], dist);
+          } else {
+            grad_t1(j) = 0;
+          }
         }
-      }
 
       // evaluate gradient with respect to log_scale at t_0
-      for (int j = 0; j < log_scales.length(); j++) {
-        if (U_p[j]) {
-          grad_t1(j+log_shape_internal.length()) = hazard_gradient_log_scale(x(i, 4), a_pi[j], l_p[j], log_shape_internal[j], log_scales[j]);
-        } else {
-          grad_t1(j+log_shape_internal.length()) = 0;
+        for (int j = 0; j < log_scales.length(); j++) {
+          if (U_p[j]) {
+            grad_t1(j+log_shape_internal.length()) = hazard_gradient_log_scale(x(i, 4), a_pi[j], l_p[j], log_shape_internal[j], log_scales[j], dist);
+          } else {
+            grad_t1(j+log_shape_internal.length()) = 0;
+          }
         }
-      }
 
-    }
+      }
 
       ret_mat(i, _) = (- exp(-H_i0) * grad_t0 + exp(-H_i1) * grad_t1) / (exp(-H_i0) - exp(-H_i1));
     }

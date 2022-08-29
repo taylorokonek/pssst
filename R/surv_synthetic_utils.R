@@ -4,13 +4,14 @@
 #' @param weights vector of survey weights
 #' @param par parameter vector
 #' @param shape_par_ids which pars are shape parameters
+#' @param dist integer denoting which distribution to use
 #' @return negative log likelihood
 #' 
 #' @author Taylor Okonek
 #' @noRd
 #' @keywords internal
-optim_fn <- function(data, weights, par, shape_par_ids) {
-  -sum(rcpp_loglik_multi(data, par[shape_par_ids], par[-shape_par_ids]) * weights)
+optim_fn <- function(data, weights, par, shape_par_ids, dist) {
+  -sum(rcpp_loglik_multi(data, par[shape_par_ids], par[-shape_par_ids], dist) * weights)
 }
 
 #' CDF for weibull distribution

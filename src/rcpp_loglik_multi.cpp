@@ -20,10 +20,14 @@ using namespace Rcpp;
 // t_0i: Left end point for interval censoring
 // t_1i: Right end point for interval censoring
 // a_pi_p: Age at beginning of period p
-// l_p_p: Length of time of interval p 
+// l_p_p: Length of time of interval p  
+//
+// distributions:
+// 0 = Exponential
+// 1 = Weibull
 
 // [[Rcpp::export]]
-NumericVector rcpp_loglik_multi(DataFrame x_df, NumericVector log_shapes, NumericVector log_scales) {
+NumericVector rcpp_loglik_multi(DataFrame x_df, NumericVector log_shapes, NumericVector log_scales, int dist) {
 
   // Convert dataframe to matrix
   NumericMatrix x = testDFtoNM1(x_df);
@@ -85,7 +89,7 @@ NumericVector rcpp_loglik_multi(DataFrame x_df, NumericVector log_shapes, Numeri
       H_i = 0;
       for (j = 0; j < U_p.length(); j++) {
         if (U_p[j]) {
-          H_i += rcpp_hazard_weibull_integral(std::max(a_pi[j], 0.0), std::min(x(i, 2), a_pi[j] + l_p[j]), log_shape_internal[j], log_scales[j]);
+          H_i += rcpp_hazard_integral(std::max(a_pi[j], 0.0), std::min(x(i, 2), a_pi[j] + l_p[j]), log_shape_internal[j], log_scales[j], dist);
         }
       }
       
@@ -101,7 +105,7 @@ NumericVector rcpp_loglik_multi(DataFrame x_df, NumericVector log_shapes, Numeri
       H_i0 = 0;
       for (j = 0; j < U_p.length(); j++) {
         if (U_p[j]) {
-          H_i0 += rcpp_hazard_weibull_integral(std::max(a_pi[j], 0.0), std::min(x(i, 3), a_pi[j] + l_p[j]), log_shape_internal[j], log_scales[j]);
+          H_i0 += rcpp_hazard_integral(std::max(a_pi[j], 0.0), std::min(x(i, 3), a_pi[j] + l_p[j]), log_shape_internal[j], log_scales[j], dist);
         }
       }
       
@@ -113,7 +117,7 @@ NumericVector rcpp_loglik_multi(DataFrame x_df, NumericVector log_shapes, Numeri
       H_i1 = 0;
       for (j = 0; j < U_p.length(); j++) {
         if (U_p[j]) {
-          H_i1 += rcpp_hazard_weibull_integral(std::max(a_pi[j], 0.0), std::min(x(i, 4), a_pi[j] + l_p[j]), log_shape_internal[j], log_scales[j]);
+          H_i1 += rcpp_hazard_integral(std::max(a_pi[j], 0.0), std::min(x(i, 4), a_pi[j] + l_p[j]), log_shape_internal[j], log_scales[j], dist);
         }
       }
       
