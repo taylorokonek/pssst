@@ -63,6 +63,9 @@ surv_synthetic <- function(df,
   temp <- df[,c(individual, household, cluster, strata, weights, p, a_pi, l_p,
                 I_i, A_i, t_i, t_0i, t_1i)]
   df <- temp
+  colnames(df) <- c("individual", "household", "cluster",
+                    "strata", "weights", "p", "a_pi", "l_p",
+                    "I_i", "A_i", "t_i", "t_0i", "t_1i")
   
   # get number of periods
   n_periods <- length(unique(df$p))
@@ -128,12 +131,31 @@ surv_synthetic <- function(df,
                log_scale_mean = est[2:length(est)],
                log_shape_var = rep(vmat[1,1], n_periods),
                log_scale_var = diag(vmat)[2:length(est)])
+    
+    # add u5mr, nmr, imr to ret_df
+    if (dist == "weibull") {
+      ret_df$U5MR <- p_weibull(60, log_shape = ret_df$log_shape_mean, log_scale = ret_df$log_scale_mean)
+      delta_vmat <- p_weibull_deltamethod(60, par = est, vmat = vmat, shape_par_ids = 1)
+      ret_df$U5MR_var <- diag(delta_vmat)
+      ret_df$U5MR_upper <- ret_df$U5MR + 1.96 * sqrt(ret_df$U5MR_var)
+      ret_df$U5MR_lower <- ret_df$U5MR - 1.96 * sqrt(ret_df$U5MR_var)
+    }
+    
   } else {
     ret_df <- data.frame(period = 1:n_periods,
                          log_shape_mean = est[1:n_periods],
                          log_scale_mean = est[(n_periods + 1):(n_periods*2)],
                          log_shape_var = diag(vmat)[1:n_periods],
                          log_scale_var = diag(vmat)[(n_periods + 1):(n_periods*2)])
+    
+    # add u5mr, nmr, imr to ret_df
+    if (dist == "weibull") {
+      ret_df$U5MR <- p_weibull(60, log_shape = ret_df$log_shape_mean, log_scale = ret_df$log_scale_mean)
+      delta_vmat <- p_weibull_deltamethod(60, par = est, vmat = vmat, shape_par_ids = 1:n_periods)
+      ret_df$U5MR_var <- diag(delta_vmat)
+      ret_df$U5MR_upper <- ret_df$U5MR + 1.96 * sqrt(ret_df$U5MR_var)
+      ret_df$U5MR_lower <- ret_df$U5MR - 1.96 * sqrt(ret_df$U5MR_var)
+    }
   }
 
   ret_lst <- list(result = ret_df,
