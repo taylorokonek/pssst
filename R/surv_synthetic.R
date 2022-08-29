@@ -57,6 +57,9 @@ surv_synthetic <- function(df,
   # error checking
   if (dist != "weibull") {
     stop("surv_synthetic currently only supports weibull distribution")
+    if (only_scale) {
+      stop("only_scale = TRUE is only available for dist = 'weibull'")
+    }
   }
   dist <- 1
   
@@ -102,6 +105,7 @@ surv_synthetic <- function(df,
                                        log_scales = optim_res$par[2:length(optim_res$par)], 
                                        dist = dist)
   } else {
+    message("fitting model")
     start_time <- Sys.time()
     optim_res <- optim(par = c(rep(-1,n_periods), rep(15, n_periods)),
                        fn = optim_fn,
@@ -140,7 +144,7 @@ surv_synthetic <- function(df,
                log_scale_var = diag(vmat)[2:length(est)])
     
     # add u5mr, nmr, imr to ret_df
-    if (dist == "weibull") {
+    if (dist == 1) {
       ret_df$U5MR <- p_weibull(60, log_shape = ret_df$log_shape_mean, log_scale = ret_df$log_scale_mean)
       delta_vmat <- p_weibull_deltamethod(60, par = est, vmat = vmat, shape_par_ids = 1)
       ret_df$U5MR_var <- diag(delta_vmat)
@@ -156,7 +160,7 @@ surv_synthetic <- function(df,
                          log_scale_var = diag(vmat)[(n_periods + 1):(n_periods*2)])
     
     # add u5mr, nmr, imr to ret_df
-    if (dist == "weibull") {
+    if (dist == 1) {
       ret_df$U5MR <- p_weibull(60, log_shape = ret_df$log_shape_mean, log_scale = ret_df$log_scale_mean)
       delta_vmat <- p_weibull_deltamethod(60, par = est, vmat = vmat, shape_par_ids = 1:n_periods)
       ret_df$U5MR_var <- diag(delta_vmat)
