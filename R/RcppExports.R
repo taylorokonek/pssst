@@ -17,3 +17,7 @@ rcpp_loglik_multi <- function(x_df, log_shapes, log_scales, dist) {
     .Call(`_pssst_rcpp_loglik_multi`, x_df, log_shapes, log_scales, dist)
 }
 
+rcpp_turnbull <- function(niter, t0, t1, lefttrunc, righttrunc, weights) {
+    .Call(`_pssst_rcpp_turnbull`, niter, t0, t1, lefttrunc, righttrunc, weights)
+}
+
