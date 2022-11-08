@@ -2,5 +2,6 @@
 
 export(format_dhs)
 export(surv_synthetic)
+export(turnbull)
 importFrom(Rcpp,sourceCpp)
 useDynLib(pssst, .registration=TRUE)
