@@ -21,6 +21,7 @@ get_births <- function(dat,
   dob <- "b3"
   alive <- "b5"
   age <- "b7"
+  exact_age <- "b6"
   age.truncate <- 24
   cmc.adjust <- 0
   date.interview <- "v008"
@@ -125,11 +126,14 @@ get_births <- function(dat,
   datnew$urban <- datnew$v025
   datnew$weights <- datnew$v005
   
+  # add in exact_age as recorded in B6 of DHS
+  datnew$exact_age <- dat[,exact_age]
+  
   # grab relevant columns
   datnew <- datnew[,c("caseid", "cluster", "household", "strata", "weights", "urban",
                       "survey_year", "id.new", "died", "t0", "t1", "age_at_censoring", "age_interval",
                       "year_born", "month_born", "year_died", "month_died", "right_censored",
-                      "interval_censored")] 
+                      "interval_censored", "exact_age")] 
   
   return(datnew)
 }
@@ -165,6 +169,8 @@ df_expand <- function(surv_df,
   df$b_i <- df$b_i %>% ym()
   df$y_p <- df$y_p %>% ymd()
   df$a_pi <- round((df$y_p - df$b_i)/365 * 12) %>% as.numeric # age in months at start of time period
+  
+  df <- suppressMessages(left_join(df, surv_df[,c("individual","exact_age")]))
   
   surv_df_expanded <- df
   
