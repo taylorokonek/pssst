@@ -36,11 +36,11 @@ right-truncated}
 }
 \value{
 a list containing the following:
-\begin{itemize}
+\itemize{
 \item a dataframe of final estimates for specific times
 \item a matrix of estimates at each iteration, with ncol = niter
 \item number of iterations
-\end{itemize}
+}
 }
 \description{
 Function to obtain Turbull estimates for arbitrarily censored and truncated observations

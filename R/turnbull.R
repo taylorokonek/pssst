@@ -13,11 +13,11 @@
 #' @param weights column corresponding to weights in \code{df}
 #' @param niter number of iterations to run the algorithm
 #' @return a list containing the following:
-#' \begin{itemize}
+#' \itemize{
 #' \item a dataframe of final estimates for specific times
 #' \item a matrix of estimates at each iteration, with ncol = niter
 #' \item number of iterations
-#' \end{itemize}
+#' }
 #' 
 #' @author Taylor Okonek
 #' @export turnbull
