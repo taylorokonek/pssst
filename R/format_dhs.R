@@ -15,7 +15,6 @@
 #' 
 #' @author Taylor Okonek
 #' @export format_dhs
-
 format_dhs <- function(df, 
                        survey_year, 
                        period_boundaries, 
