@@ -26,7 +26,7 @@ format_turnbull <- function(df) {
     row_ids <- which(I0_df$individual == I0_df$individual[i])
     test <- I0_df[row_ids,]
     test <- test %>%
-      mutate(lefttrunc = ifelse(a_pi < 0, 0, a_pi),
+      dplyr::mutate(lefttrunc = ifelse(a_pi < 0, 0, a_pi),
              righttrunc = Inf,
              t_0i = lefttrunc)
     test$t_1i <- c(test$lefttrunc[-1],test$t_i[1])
@@ -39,7 +39,7 @@ format_turnbull <- function(df) {
     row_ids <- which(I1_df$individual == unique(I1_df$individual)[i])
     test <- I1_df[row_ids,]
     test <- test %>%
-      mutate(lefttrunc = ifelse(a_pi < 0, 0, a_pi),
+      dplyr::mutate(lefttrunc = ifelse(a_pi < 0, 0, a_pi),
              righttrunc = Inf,
              t_0i = pmin(t_0i,lefttrunc))
     test$t_1i <- pmin(c(test$lefttrunc[-1],test$t_1i[1]), test$t_1i[1])
@@ -47,7 +47,7 @@ format_turnbull <- function(df) {
   }
   
   I1_df_small <- I1_df %>% 
-    filter(lefttrunc < t_1i)
+    dplyr::filter(lefttrunc < t_1i)
   
   turnbull_df <- rbind(I0_df_small, I1_df_small)
   
