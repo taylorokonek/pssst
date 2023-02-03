@@ -13,8 +13,8 @@ format_turnbull <- function(df) {
   # All of this should be moved to c++ because it is VERY slow
   
   # get data ready for turnbull function
-  I0_df <- df %>% filter(I_i == 0)
-  I1_df <- df %>% filter(I_i == 1)
+  I0_df <- df %>% dplyr::filter(I_i == 0)
+  I1_df <- df %>% dplyr::filter(I_i == 1)
   
   I0_df$lefttrunc <- NA
   I0_df$righttrunc <- NA
@@ -33,7 +33,7 @@ format_turnbull <- function(df) {
     I0_df[row_ids,] <- test
   }
   
-  I0_df_small <- I0_df %>% filter(a_pi >= -60) 
+  I0_df_small <- I0_df %>% dplyr::filter(a_pi >= -60) 
   
   for (i in 1:length(unique(I1_df$individual))) {
     row_ids <- which(I1_df$individual == unique(I1_df$individual)[i])
