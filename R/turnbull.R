@@ -1,6 +1,6 @@
 #' Function to obtain Turbull estimates for arbitrarily censored and truncated observations
 #' 
-#' @param df a dataframe containing the output from \code{format_dhs}, or optionally, dataframe
+#' @param df a dataframe containing the output from \code{format_turnbull}, or optionally, dataframe
 #' containing the following columns
 #' @param t_0i column corresponding to lower bound of interval if interval-censored, 
 #' censoring time if right-censored, observed time if exactly observed, in \code{df}

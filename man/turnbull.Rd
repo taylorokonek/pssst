@@ -15,7 +15,7 @@ turnbull(
 )
 }
 \arguments{
-\item{df}{a dataframe containing the output from \code{format_dhs}, or optionally, dataframe
+\item{df}{a dataframe containing the output from \code{format_turnbull}, or optionally, dataframe
 containing the following columns}
 
 \item{t_0i}{column corresponding to lower bound of interval if interval-censored,
