@@ -66,8 +66,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // rcpp_turnbull
-List rcpp_turnbull(int niter, NumericVector t0, NumericVector t1, NumericVector lefttrunc, NumericVector righttrunc, NumericVector weights);
-RcppExport SEXP _pssst_rcpp_turnbull(SEXP niterSEXP, SEXP t0SEXP, SEXP t1SEXP, SEXP lefttruncSEXP, SEXP righttruncSEXP, SEXP weightsSEXP) {
+List rcpp_turnbull(int niter, NumericVector t0, NumericVector t1, NumericVector lefttrunc, NumericVector righttrunc, NumericVector weights, NumericVector set_lower, NumericVector set_upper);
+RcppExport SEXP _pssst_rcpp_turnbull(SEXP niterSEXP, SEXP t0SEXP, SEXP t1SEXP, SEXP lefttruncSEXP, SEXP righttruncSEXP, SEXP weightsSEXP, SEXP set_lowerSEXP, SEXP set_upperSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -77,7 +77,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type lefttrunc(lefttruncSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type righttrunc(righttruncSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type weights(weightsSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcpp_turnbull(niter, t0, t1, lefttrunc, righttrunc, weights));
+    Rcpp::traits::input_parameter< NumericVector >::type set_lower(set_lowerSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type set_upper(set_upperSEXP);
+    rcpp_result_gen = Rcpp::wrap(rcpp_turnbull(niter, t0, t1, lefttrunc, righttrunc, weights, set_lower, set_upper));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -87,7 +89,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_pssst_rcpp_expand_surv_helper", (DL_FUNC) &_pssst_rcpp_expand_surv_helper, 3},
     {"_pssst_rcpp_gradient_multi", (DL_FUNC) &_pssst_rcpp_gradient_multi, 4},
     {"_pssst_rcpp_loglik_multi", (DL_FUNC) &_pssst_rcpp_loglik_multi, 4},
-    {"_pssst_rcpp_turnbull", (DL_FUNC) &_pssst_rcpp_turnbull, 6},
+    {"_pssst_rcpp_turnbull", (DL_FUNC) &_pssst_rcpp_turnbull, 8},
     {NULL, NULL, 0}
 };
 

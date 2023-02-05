@@ -17,10 +17,12 @@ using namespace Rcpp;
 // lefttrunc: vector of times at left truncation (0 if not left truncated)
 // righttrunc: vector of times at right truncation (Inf if not right truncated)
 // weights: vector of survey weights
+// set_lower: vector of set lower bounds for intervals. Useful if there are set intervals you want to estimate that are more granular than your data
+// set_upper: vector of set lower bounds for intervals. Useful if there are set intervals you want to estimate that are more granular than your data
 //
 
 // [[Rcpp::export]]
-List rcpp_turnbull(int niter, NumericVector t0, NumericVector t1, NumericVector lefttrunc, NumericVector righttrunc, NumericVector weights) {
+List rcpp_turnbull(int niter, NumericVector t0, NumericVector t1, NumericVector lefttrunc, NumericVector righttrunc, NumericVector weights, NumericVector set_lower, NumericVector set_upper) {
 
 	// get intervals
 
@@ -35,13 +37,26 @@ List rcpp_turnbull(int niter, NumericVector t0, NumericVector t1, NumericVector 
 	NumericVector temp2 = sort_unique(temp);
 
 	// declare q_j and p_j for lower and upper bounds of intervals
-	NumericVector q_j(temp2.length() - 1);
-	NumericVector p_j(temp2.length() - 1);
+	NumericVector q_j, p_j;
 
-	for (int i = 0; i < q_j.length(); i++) {
-		q_j(i) = temp2(i);
-		p_j(i) = temp2(i + 1);
+	if (Rcpp::traits::is_nan<REALSXP>(set_lower[0])) {
+		q_j  = NumericVector(temp2.length() - 1);
+		p_j  = NumericVector(temp2.length() - 1);
+
+		for (int i = 0; i < q_j.length(); i++) {
+			q_j(i) = temp2(i);
+			p_j(i) = temp2(i + 1);
+		}
+	} else {
+		q_j  = NumericVector(set_lower.length());
+		p_j  = NumericVector(set_upper.length());
+
+		for (int i = 0; i < q_j.length(); i++) {
+			q_j(i) = set_lower(i);
+			p_j(i) = set_upper(i);
+		}
 	}
+
 
 	// if anyone is exactly observed, make a closed interval [x,x]
 	int num_closed = 0;
