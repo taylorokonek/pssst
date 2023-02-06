@@ -10,8 +10,13 @@ turnbull(
   t_1i = "t_1i",
   lefttrunc = "lefttrunc",
   righttrunc = "righttrunc",
+  period = NA,
   weights = "weights",
-  niter
+  jackknife_var = FALSE,
+  cluster = NA,
+  strata = NA,
+  niter,
+  niter_jackknife = niter
 )
 }
 \arguments{
@@ -30,15 +35,28 @@ left-truncated}
 \item{righttrunc}{column corresponding to right-truncation time \code{df}, \code{Inf} if not
 right-truncated}
 
+\item{period}{column corresponding to period identification in \code{df}. If specified, separate
+Turnbull estimates will be produced for each value in \code{period}.}
+
 \item{weights}{column corresponding to weights in \code{df}}
 
+\item{jackknife_var}{indicator for whether or not to compute jackknife variance of the estimator.
+Will approximate the finite sample variance when sample size is small compared to population size. Defaults
+to \code{FALSE}. If \code{jackknife_var} = \code{TRUE}, then both cluster and strata must be specified}
+
+\item{cluster}{column corresponding to cluster ID from survey design. Only used if \code{jackknife_var} = \code{TRUE}.}
+
+\item{strata}{column corresponding to strata ID from survey design. Only used if \code{jackknife_var} = \code{TRUE}.}
+
 \item{niter}{number of iterations to run the algorithm}
+
+\item{niter_jackknife}{number of iterations to run each resample. Defaults to \code{niter}}
 }
 \value{
 a list containing the following:
 \itemize{
-\item a dataframe of final estimates for specific times
-\item a matrix of estimates at each iteration, with ncol = niter
+\item a dataframe of final estimates for specific times (and periods)
+\item a matrix of estimates at each iteration, with ncol = niter, or a list of such matrices for each period
 \item number of iterations
 }
 }

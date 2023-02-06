@@ -9,6 +9,7 @@ format_dhs(
   survey_year,
   period_boundaries,
   right_censor_time = NA,
+  intervals = NA,
   strata = c("v023", "v024", "v025")[1]
 )
 }
@@ -25,6 +26,10 @@ Example: if periods are 2000-2005 and 2005-2010, \code{period_boundaries} should
 \item{right_censor_time}{age in months at which every individual who was not yet died
 should be right-censored. If there is no such age, set equal to NA. If estimating U5MR,
 consider setting to 60.}
+
+\item{intervals}{an optional character vector specifying any specific intervals in which
+observations should be censored. For example, to interval censor people between ages 6 and 18
+months, \code{intervals = c("6-18")}. Intervals cannot overlap (i.e. can't have 6-18, 12-20).}
 
 \item{strata}{a string vector containing which column in \code{df} contains the strata
 information. Can be multiple columns. Defaults to "v023".}

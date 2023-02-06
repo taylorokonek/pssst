@@ -12,6 +12,10 @@
 #' @param right_censor_time age in months at which every individual who was not yet died
 #' should be right-censored. If there is no such age, set equal to NA. If estimating U5MR, 
 #' consider setting to 60.
+#' @param intervals an optional character vector specifying any specific intervals in which
+#' observations should be censored. For example, to interval censor people between ages 6 and 18
+#' months, \code{intervals = c("6-18")}. Intervals cannot overlap (i.e. can't have 6-18, 12-20). Default
+#' intervals are the ones observed in DHS: monthly through age 24 months, yearly after.
 #' @param strata a string vector containing which column in \code{df} contains the strata 
 #' information. Can be multiple columns. Defaults to "v023".
 #' @return A dataframe containing the births recode in a format that can be input to \code{surv_synthetic}.
@@ -22,13 +26,18 @@ format_dhs <- function(df,
                        survey_year, 
                        period_boundaries, 
                        right_censor_time = NA,
+                       intervals = NA,
                        strata = c("v023", "v024", "v025")[1]) {
   
   # get year_cut from period_boundaries
   year_cut <- period_boundaries[-length(period_boundaries)]
   
   # call get_births
-  births <- get_births(dat = df, surveyyear = survey_year, year.cut = year_cut)
+  births <- get_births(dat = df, 
+                       surveyyear = survey_year, 
+                       year.cut = year_cut, 
+                       strata = strata,
+                       intervals = intervals)
   
   # remove individuals born before min(year_cut)
   num_before <- length(which(births$year_born < min(year_cut)))

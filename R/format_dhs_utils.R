@@ -10,9 +10,10 @@
 #' @noRd
 #' @keywords internal
 get_births <- function(dat, 
-                       surveyyear = NA, 
-                       strata = c("v023", "v024", "v025")[1], 
-                       year.cut) {
+                       surveyyear, 
+                       strata, 
+                       year.cut,
+                       intervals) {
   
   # additional definitions
   variables <- c("caseid", 
@@ -26,6 +27,18 @@ get_births <- function(dat,
   cmc.adjust <- 0
   date.interview <- "v008"
   month.cut <- c(seq(1,24), seq(36,12*100, by = 12))
+  
+  # extra interval censoring, if specified
+  if (!is.na(intervals)) {
+    seq_remove <- c()
+      for (i in 1:length(intervals)) {
+        tmp_int <- intervals[i] %>% str_split("-") %>% unlist %>% as.numeric
+        tmp_seq <- seq(tmp_int[1],tmp_int[2])
+        tmp_seq <- tmp_seq[-c(1,length(tmp_seq))]
+        seq_remove <- c(seq_remove, tmp_seq)
+      }
+    month.cut <- month.cut[!(month.cut %in% seq_remove)]
+  }
   
   # copied copied from SUMMER::getBirths
   period.1yr <- year.cut[2] - year.cut[1] == 1
