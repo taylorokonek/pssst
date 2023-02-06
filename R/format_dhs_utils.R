@@ -29,7 +29,7 @@ get_births <- function(dat,
   month.cut <- c(seq(1,24), seq(36,12*100, by = 12))
   
   # extra interval censoring, if specified
-  if (!is.na(intervals)) {
+  if (!is.na(intervals[1])) {
     seq_remove <- c()
       for (i in 1:length(intervals)) {
         tmp_int <- intervals[i] %>% str_split("-") %>% unlist %>% as.numeric

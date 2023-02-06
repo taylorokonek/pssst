@@ -14,11 +14,32 @@
 #' consider setting to 60.
 #' @param intervals an optional character vector specifying any specific intervals in which
 #' observations should be censored. For example, to interval censor people between ages 6 and 18
-#' months, \code{intervals = c("6-18")}. Intervals cannot overlap (i.e. can't have 6-18, 12-20). Default
-#' intervals are the ones observed in DHS: monthly through age 24 months, yearly after.
+#' months, \code{intervals = c("0-1","1-2,"6-18")}. Intervals cannot overlap (i.e. can't have 6-18, 12-20). Default
+#' intervals are the ones observed in DHS: exact daily deaths before 1 month, monthly through age 24 months, yearly after.
+#' Days will be reported as 1/30th of a month.
 #' @param strata a string vector containing which column in \code{df} contains the strata 
 #' information. Can be multiple columns. Defaults to "v023".
-#' @return A dataframe containing the births recode in a format that can be input to \code{surv_synthetic}.
+#' @return A dataframe containing the births recode in a format that can be input to \code{surv_synthetic}. Each
+#' individual will have multiple rows in the dataframe (one for each period).
+#' \itemize{
+#'  \item individual: individual id
+#'  \item household: household id
+#'  \item cluster: cluster id
+#'  \item strata
+#'  \item weights: survey weights
+#'  \item p: numeric period identified
+#'  \item y_p: the date the period begins
+#'  \item l_p: the length of the period, in months
+#'  \item b_i: the birth date of the individual
+#'  \item t_i: age at right-censoring, if right-censored
+#'  \item t_0i: lower bound of interval, if interval-censored. date of death if observed exactly
+#'  \item t_1i: upper bound of interval, if interval-censored. date of death if observed exactly
+#'  \item I_i: indicator for death. I_i == 1 if interval-censored or died exactly, I_i == 0 if right censored
+#'  \item survey_year: year of survey
+#'  \item a_pi: age of child in months at beginning of time period
+#'  \item exact_age: exact age of death recorded in DHS (b6 in births recode)
+#'  \item A_i: indicator for if a child is interval-censored across the boundary of a time period
+#' }
 #' 
 #' @author Taylor Okonek
 #' @export format_dhs
@@ -62,11 +83,40 @@ format_dhs <- function(df,
     births[row_ids,]$age_at_censoring <- right_censor_time
   }
   
+  # death with exact days of death
+  # get rows where child's death is recorded in days
+  suppressWarnings(temp_df <- births %>% 
+                     dplyr::mutate(exact_age = as.numeric(as.character(exact_age))))
+  exact_rows <- which(temp_df$exact_age < 200 & temp_df$exact_age >= 100)
+  exact_rows <- c(exact_rows,which((births$exact_age == "Days: 1") | (births$exact_age == "Died on day of birth")))
+  
+  # get birth in days
+  daily_births <- births[exact_rows,]$exact_age 
+  suppressWarnings(daily_births <- ifelse(daily_births == "Died on day of birth", 0,
+                         ifelse(daily_births == "Days: 1", 1, as.numeric(as.character(daily_births)) - 100)))
+  daily_births <- daily_births / 30 # transform to months
+  
+  # if any exact births are within intervals specified, don't alter them
+  which_remove <- c()
+  for (i in 1:length(intervals)) {
+    lb <- intervals[i] %>% str_split("-") %>% unlist %>% nth(1) %>% as.numeric
+    ub <- intervals[i] %>% str_split("-") %>% unlist %>% nth(2) %>% as.numeric
+    which_remove <- c(which_remove, which((daily_births <= ub) & (daily_births >= lb)))
+  }
+  which_remove <- unique(which_remove)
+  
+  exact_rows <- exact_rows[-which_remove]
+  
+  # replace t0 and t1 in dataframe with daily_births
+  births[exact_rows,]$t0 <- daily_births
+  births[exact_rows,]$t1 <- daily_births
   
   # expand dataframe
   births <- df_expand(surv_df = births, 
                       period_boundaries = period_boundaries, 
                       survey_date = survey_year)
+  
+  # if a death is observed exactly, t_0i == t_1i, and I_i == 1
   
   # remove people who are right-censored at age 0 (absolute nonsense)
   num_nonsense <- births %>% filter(I_i == 0 & t_i == 0) %>% nrow()
