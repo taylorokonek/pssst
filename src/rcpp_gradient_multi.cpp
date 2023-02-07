@@ -109,7 +109,7 @@ NumericVector rcpp_gradient_multi(DataFrame x_df, NumericVector log_shapes, Nume
       
       
       // if interval censored...
-    } else {
+    } else if (I_i[i] == 1) {
       // identify which periods this person lived in for t_0
 
       U_p = (a_pi > -l_p) & (a_pi < x(i, 3));
@@ -205,7 +205,50 @@ NumericVector rcpp_gradient_multi(DataFrame x_df, NumericVector log_shapes, Nume
       }
 
       ret_mat(i, _) = (- exp(-H_i0) * grad_t0 + exp(-H_i1) * grad_t1) / (exp(-H_i0) - exp(-H_i1));
+    
+    // if death observed exactly...
+    } else {
+      
+      // identify which period the person died in 
+      U_p = (a_pi > -l_p) & (a_pi < x(i, 3)); // this will be length(1)
+      
+      if (single_shape) {
+        // evaluate gradient with respect to log_shape at t_0
+        grad_t0(0) = l_pdf_gradient_log_shape(x(i, 3), log_shape_internal[0], log_scales[U_p[0]], dist);
+        
+        // evaluate gradient with respect to log_scale at t_0
+        for (int j = 0; j < log_scales.length(); j++) {
+          if (U_p[j]) {
+            grad_t0(j+1) = l_pdf_gradient_log_scale(x(i, 3), log_shape_internal[0], log_scales[j], dist);
+          } else {
+            grad_t0(j+1) = 0;
+          }
+        }
+      } else {
+
+        // evaluate gradient with respect to log_shape
+        for (int j = 0; j < log_shape_internal.length(); j++) {
+          if (U_p[j]) {
+            ret_mat(i, j) = l_pdf_gradient_log_shape(x(i, 3), log_shape_internal[j], log_scales[j], dist);
+          } else {
+            ret_mat(i, j) = 0;
+          }
+        }
+
+        // evaluate gradient with respect to log_scale
+        for (int j = 0; j < log_scales.length(); j++) {
+          if (U_p[j]) {
+            ret_mat(i, j + log_shape_internal.length()) = l_pdf_gradient_log_scale(x(i, 3), log_shape_internal[j], log_scales[j], dist);
+          } else {
+            ret_mat(i, j + log_shape_internal.length()) = 0;
+          }
+        }
+
+      }
+      
     }
+    
+    
   }
   
   return(ret_mat);

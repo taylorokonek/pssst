@@ -77,6 +77,9 @@ surv_synthetic <- function(df,
                     "strata", "weights", "p", "a_pi", "l_p",
                     "I_i", "A_i", "t_i", "t_0i", "t_1i")
   
+  # make I_i == 2 if exactly observed
+  df <- df %>% dplyr::mutate(I_i = ifelse((t_0i == t_1i) & I_i == 1, 2, I_i))
+  
   # get number of periods
   n_periods <- length(unique(df$p))
   

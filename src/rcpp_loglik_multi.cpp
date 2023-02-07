@@ -15,6 +15,7 @@ using namespace Rcpp;
 // I_i: Indicator for which type of censoring we're dealing with:
 //    0: right-censored at time t_i
 //    1: interval-censored 
+//    2: exactly observed
 // A_i: Indicator for if they're interval censored across the boundary of a time period (can only be 1 if I_i = 1)
 // t_i: Time at event
 // t_0i: Left end point for interval censoring
@@ -69,12 +70,8 @@ NumericVector rcpp_loglik_multi(DataFrame x_df, NumericVector log_shapes, Numeri
   
   for (i = 0; i < x.nrow(); i++) {
 
-    // Rcout << "Here 1 \n";
-
     a_pi_mat = x(Range(i,i), Range(a_pi_cols[0], a_pi_cols[num_periods - 1]));
     l_p_mat = x(Range(i,i), Range(l_p_cols[0], l_p_cols[num_periods - 1]));
-    
-    // Rcout << "Here 2 \n";
     
     a_pi = a_pi_mat( 0, _ );
     l_p = l_p_mat( 0, _ );
@@ -96,7 +93,7 @@ NumericVector rcpp_loglik_multi(DataFrame x_df, NumericVector log_shapes, Numeri
       ret_vec[i] = -H_i;
       
       // if interval censored...
-    } else  {
+    } else if (I_i[i] == 1) {
       // identify which periods this person lived in for t_0
 
       U_p = (a_pi > -l_p) & (a_pi < x(i, 3));
@@ -123,6 +120,21 @@ NumericVector rcpp_loglik_multi(DataFrame x_df, NumericVector log_shapes, Numeri
       
       ret_vec[i] = log(exp(-H_i0) - exp(-H_i1));
 
+      // if observed exactly...
+    } else {
+      // identify which period this person died in
+      U_p = (a_pi > -l_p) & (a_pi < x(i, 3)); // this will be length 1
+      
+      // call it H_i so we don't have to declare a new double
+      H_i = 0;
+      for (j = 0; j < U_p.length(); j++) {
+        if (U_p[j]) {
+          H_i += rcpp_l_pdf(x(i,3), log_shape_internal[j], log_scales[j], dist);
+        }
+      }
+      
+      ret_vec[i] = H_i;
+      
     }  
 
   }

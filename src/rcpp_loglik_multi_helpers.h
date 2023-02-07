@@ -27,3 +27,16 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
   }
   return(ret_val);
 }
+
+// log pdf
+// 0 = Exponential
+// 1 = Weibull
+double rcpp_l_pdf(double x, double log_shape, double log_scale, int dist) {
+  double rate_param = 1/exp(log_scale);
+  double shape_param = exp(log_shape);
+  double ret_val;
+  if (dist == 0 | dist == 1) {
+    ret_val = log(rate_param * shape_param) + (shape_param - 1) * log(rate_param * x) - pow(rate_param * x, shape_param);
+  }
+  return(ret_val);
+}
