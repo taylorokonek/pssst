@@ -16,7 +16,8 @@
 #' observations should be censored. For example, to interval censor people between ages 6 and 18
 #' months, \code{intervals = c("0-1","1-2,"6-18")}. Intervals cannot overlap (i.e. can't have 6-18, 12-20). Default
 #' intervals are the ones observed in DHS: exact daily deaths before 1 month, monthly through age 24 months, yearly after.
-#' Days will be reported as 1/30th of a month.
+#' Days will be reported as 1/30th of a month. If an individual "Died on day of birth", they are
+#' interval censored from [0,1/30].
 #' @param strata a string vector containing which column in \code{df} contains the strata 
 #' information. Can be multiple columns. Defaults to "v023".
 #' @return A dataframe containing the births recode in a format that can be input to \code{surv_synthetic}. Each
@@ -88,20 +89,21 @@ format_dhs <- function(df,
   suppressWarnings(temp_df <- births %>% 
                      dplyr::mutate(exact_age = as.numeric(as.character(exact_age))))
   exact_rows <- which(temp_df$exact_age < 200 & temp_df$exact_age >= 100)
-  exact_rows <- c(exact_rows,which((births$exact_age == "Days: 1") | (births$exact_age == "Died on day of birth")))
+  exact_rows <- c(exact_rows,which(births$exact_age == "Days: 1"))
   
   # get birth in days
   daily_births <- births[exact_rows,]$exact_age 
-  suppressWarnings(daily_births <- ifelse(daily_births == "Died on day of birth", 0,
-                         ifelse(daily_births == "Days: 1", 1, as.numeric(as.character(daily_births)) - 100)))
+  suppressWarnings(daily_births <- ifelse(daily_births == "Days: 1", 1, as.numeric(as.character(daily_births)) - 100))
   daily_births <- daily_births / 30 # transform to months
   
   # if any exact births are within intervals specified, don't alter them
   which_remove <- c()
+  lbs <- c()
   for (i in 1:length(intervals)) {
     lb <- intervals[i] %>% str_split("-") %>% unlist %>% nth(1) %>% as.numeric
     ub <- intervals[i] %>% str_split("-") %>% unlist %>% nth(2) %>% as.numeric
     which_remove <- c(which_remove, which((daily_births <= ub) & (daily_births >= lb)))
+    lbs <- c(lbs, lb)
   }
   which_remove <- unique(which_remove)
   
@@ -112,6 +114,15 @@ format_dhs <- function(df,
   # replace t0 and t1 in dataframe with daily_births
   births[exact_rows,]$t0 <- daily_births
   births[exact_rows,]$t1 <- daily_births
+  
+  # censor children who "Died on day of birth"
+  if (!(0 %in% lbs)) {
+    num_died_at_birth <- births %>% filter(exact_age == "Died on day of birth") %>% nrow()
+    message("Interval censoring ",num_died_at_birth, " children who died on day of birth from [0,1] day")
+    which_died <- which(births$exact_age == "Died on day of birth")
+    births[which_died,]$t1 <- 1/30
+    births[which_died,]$age_at_censoring <- 1/30
+  }
   
   # expand dataframe
   births <- df_expand(surv_df = births, 

@@ -29,13 +29,36 @@ consider setting to 60.}
 
 \item{intervals}{an optional character vector specifying any specific intervals in which
 observations should be censored. For example, to interval censor people between ages 6 and 18
-months, \code{intervals = c("6-18")}. Intervals cannot overlap (i.e. can't have 6-18, 12-20).}
+months, \code{intervals = c("0-1","1-2,"6-18")}. Intervals cannot overlap (i.e. can't have 6-18, 12-20). Default
+intervals are the ones observed in DHS: exact daily deaths before 1 month, monthly through age 24 months, yearly after.
+Days will be reported as 1/30th of a month. If an individual "Died on day of birth", they are
+interval censored from \link{0,1/30}.}
 
 \item{strata}{a string vector containing which column in \code{df} contains the strata
 information. Can be multiple columns. Defaults to "v023".}
 }
 \value{
-A dataframe containing the births recode in a format that can be input to \code{surv_synthetic}.
+A dataframe containing the births recode in a format that can be input to \code{surv_synthetic}. Each
+individual will have multiple rows in the dataframe (one for each period).
+\itemize{
+\item individual: individual id
+\item household: household id
+\item cluster: cluster id
+\item strata
+\item weights: survey weights
+\item p: numeric period identified
+\item y_p: the date the period begins
+\item l_p: the length of the period, in months
+\item b_i: the birth date of the individual
+\item t_i: age at right-censoring, if right-censored
+\item t_0i: lower bound of interval, if interval-censored. date of death if observed exactly
+\item t_1i: upper bound of interval, if interval-censored. date of death if observed exactly
+\item I_i: indicator for death. I_i == 1 if interval-censored or died exactly, I_i == 0 if right censored
+\item survey_year: year of survey
+\item a_pi: age of child in months at beginning of time period
+\item exact_age: exact age of death recorded in DHS (b6 in births recode)
+\item A_i: indicator for if a child is interval-censored across the boundary of a time period
+}
 }
 \description{
 Formats DHS survey data in appropriate way for input to \code{surv_synthetic}. Takes in
