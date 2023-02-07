@@ -29,10 +29,10 @@ consider setting to 60.}
 
 \item{intervals}{an optional character vector specifying any specific intervals in which
 observations should be censored. For example, to interval censor people between ages 6 and 18
-months, \code{intervals = c("0-1","1-2,"6-18")}. Intervals cannot overlap (i.e. can't have 6-18, 12-20). Default
+months, \code{intervals} = c("0-1","1-2,"6-18"). Intervals cannot overlap (i.e. can't have 6-18, 12-20). Default
 intervals are the ones observed in DHS: exact daily deaths before 1 month, monthly through age 24 months, yearly after.
 Days will be reported as 1/30th of a month. If an individual "Died on day of birth", they are
-interval censored from \link{0,1/30}.}
+interval censored from \link{0, 1/30}}
 
 \item{strata}{a string vector containing which column in \code{df} contains the strata
 information. Can be multiple columns. Defaults to "v023".}
