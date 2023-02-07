@@ -59,6 +59,10 @@ boundary of a time period in \code{df}}
 \code{FALSE}. This option is only available for dist = "weibull"}
 
 \item{dist}{distribution. Currently supports "weibull", "exponential"}
+
+\item{numerical_grad}{boolean for whether gradient should be calculated numerically or
+analytically. Analytical gradient is faster, but only available for Weibull and Exponential distributions
+at the moment.}
 }
 \value{
 A list containing:

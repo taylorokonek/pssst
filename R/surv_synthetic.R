@@ -22,6 +22,9 @@
 #' @param t_1i column corresponding to upper bound of interval, if interval-censored, in \code{df}
 #' @param only_scale boolean for varying only the scale parameter across time period. Defaults to
 #' \code{FALSE}. This option is only available for dist = "weibull"
+#' @param numerical_grad boolean for whether gradient should be calculated numerically or
+#' analytically. Analytical gradient is faster, but only available for Weibull and Exponential distributions
+#' at the moment.
 #' @param dist distribution. Currently supports "weibull", "exponential"
 #' @return A list containing: 
 #' \itemize{
@@ -52,6 +55,7 @@ surv_synthetic <- function(df,
                            t_0i = "t_0i",
                            t_1i = "t_1i",
                            only_scale = FALSE,
+                           numerical_grad = FALSE,
                            dist = "weibull") {
   
   # error checking
@@ -110,10 +114,22 @@ surv_synthetic <- function(df,
     end_time - start_time
     
     message("computing finite population variance")
-    test_scores <- rcpp_gradient_multi(x_df = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
-                                       log_shapes = optim_res$par[1], 
-                                       log_scales = optim_res$par[2:length(optim_res$par)], 
-                                       dist = dist)
+    if (numerical_grad) {
+      test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
+      for (i in 1:nrow(df)) {
+        test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
+                                                    x = optim_res$par, 
+                                                    data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
+                                                    weights = 1,
+                                                    shape_par_ids = 1,
+                                                    dist = dist)
+      }
+    } else {
+      test_scores <- rcpp_gradient_multi(x_df = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
+                                         log_shapes = optim_res$par[1], 
+                                         log_scales = optim_res$par[2:length(optim_res$par)], 
+                                         dist = dist)
+    }
     
   } else {
     
@@ -133,10 +149,23 @@ surv_synthetic <- function(df,
       end_time - start_time
       
       message("computing finite population variance")
-      test_scores <- rcpp_gradient_multi(x_df = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
-                                         log_shapes = optim_res$par[1:n_periods], 
-                                         log_scales = optim_res$par[(n_periods + 1):(n_periods * 2)], 
-                                         dist = dist)
+      if (numerical_grad) {
+        test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
+        for (i in 1:nrow(df)) {
+          test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
+                                            x = optim_res$par, 
+                                            data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
+                                            weights = 1,
+                                            shape_par_ids = 1:nperiods,
+                                            dist = dist)
+        }
+      } else {
+        test_scores <- rcpp_gradient_multi(x_df = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
+                                           log_shapes = optim_res$par[1:n_periods], 
+                                           log_scales = optim_res$par[(n_periods + 1):(n_periods * 2)], 
+                                           dist = dist)
+      }
+      
       # exponential
     } else if (dist == 0) {
       message("fitting model")
@@ -153,11 +182,25 @@ surv_synthetic <- function(df,
       end_time - start_time
       
       message("computing finite population variance")
-      test_scores <- rcpp_gradient_multi(x_df = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
-                                         log_shapes = 1, 
-                                         log_scales = optim_res$par, 
-                                         dist = 1)
-      test_scores <- test_scores[,-1]
+      if (numerical_grad) {
+        test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
+        for (i in 1:nrow(df)) {
+          test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
+                                            x = optim_res$par, 
+                                            data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
+                                            weights = 1,
+                                            shape_par_ids = 1,
+                                            dist = 1)
+          test_scores <- test_scores[,-1]
+        }
+      } else {
+        test_scores <- rcpp_gradient_multi(x_df = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
+                                           log_shapes = 1, 
+                                           log_scales = optim_res$par, 
+                                           dist = 1)
+        test_scores <- test_scores[,-1]
+      }
+      
     }
     
   }

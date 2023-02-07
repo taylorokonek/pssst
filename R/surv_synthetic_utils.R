@@ -1,8 +1,8 @@
 #' Function to input to optim, calls rcpp_loglik_multi
 #' 
+#' @param par parameter vector
 #' @param data dataframe
 #' @param weights vector of survey weights
-#' @param par parameter vector
 #' @param shape_par_ids which pars are shape parameters
 #' @param dist integer denoting which distribution to use
 #' @return negative log likelihood
@@ -10,7 +10,7 @@
 #' @author Taylor Okonek
 #' @noRd
 #' @keywords internal
-optim_fn <- function(data, weights, par, shape_par_ids, dist) {
+optim_fn <- function(par, data, weights, shape_par_ids, dist) {
   if (dist == 1) {
     -sum(rcpp_loglik_multi(x_df = data, 
                            log_shapes = par[shape_par_ids], 
@@ -19,6 +19,34 @@ optim_fn <- function(data, weights, par, shape_par_ids, dist) {
   } else if (dist == 0) {
     # can fit exponential likelihood using weibull code with shapes == 1
     -sum(rcpp_loglik_multi(x_df = data, 
+                           log_shapes = 0, 
+                           log_scales = par, 
+                           dist = 1) * weights)
+  }
+  
+}
+
+#' Function to input to grad, calls rcpp_loglik_multi
+#' 
+#' @param par parameter vector
+#' @param data dataframe
+#' @param weights vector of survey weights
+#' @param shape_par_ids which pars are shape parameters
+#' @param dist integer denoting which distribution to use
+#' @return negative log likelihood
+#' 
+#' @author Taylor Okonek
+#' @noRd
+#' @keywords internal
+optim_fn_grad <- function(par, data, weights, shape_par_ids, dist) {
+  if (dist == 1) {
+    sum(rcpp_loglik_multi(x_df = data, 
+                           log_shapes = par[shape_par_ids], 
+                           log_scales = par[-shape_par_ids], 
+                           dist = dist) * weights)
+  } else if (dist == 0) {
+    # can fit exponential likelihood using weibull code with shapes == 1
+    sum(rcpp_loglik_multi(x_df = data, 
                            log_shapes = 0, 
                            log_scales = par, 
                            dist = 1) * weights)
