@@ -51,6 +51,8 @@ format_dhs <- function(df,
                        intervals = NA,
                        strata = c("v023", "v024", "v025")[1]) {
   
+  max_year <-period_boundaries[length(period_boundaries)]
+  
   # get year_cut from period_boundaries
   year_cut <- period_boundaries[-length(period_boundaries)]
   
@@ -67,9 +69,9 @@ format_dhs <- function(df,
   births <- births %>% filter(year_born >= min(year_cut))
   
   # remove individuals born after max(year_cut)
-  num_after <- length(which(births$year_born >= max(year_cut)))
-  message(paste0("Removing ", num_after, " children born after ", max(year_cut)))
-  births <- births %>% filter(year_born < max(year_cut))
+  num_after <- length(which(births$year_born >= max_year))
+  message(paste0("Removing ", num_after, " children born after ", max_year))
+  births <- births %>% filter(year_born < max_year)
   
   # if a right_censor_time is specified, do that
   if (!is.na(right_censor_time)) {
