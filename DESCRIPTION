@@ -25,5 +25,6 @@ Imports:
     numDeriv,
     lubridate
 LinkingTo: 
-    Rcpp
+    Rcpp,
+    BH
 VignetteBuilder: knitr

@@ -3,6 +3,7 @@
 #include <algorithm> 
 #include <string.h>
 #include <Rmath.h>
+#include <boost/math/special_functions/gamma.hpp>
 // #include <RcppArmadilloExtensions/sample.h>
 using namespace Rcpp;
 
