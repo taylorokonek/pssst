@@ -78,18 +78,30 @@ List rcpp_turnbull(int niter, NumericVector t0, NumericVector t1, NumericVector 
 			}
 		}
 	}
+	
+	// get unique, exactly observed observations
+	NumericVector which_closed_unique = sort_unique(which_closed);
 
 	// update q_j, p_j to include which_closed
-	NumericVector q_j_final(q_j.length() + num_closed);
-	NumericVector p_j_final(p_j.length() + num_closed);
+	NumericVector q_j_final, p_j_final;
+	if (Rcpp::traits::is_nan<REALSXP>(set_lower[0])) {
+	  q_j_final = NumericVector(q_j.length()  + which_closed_unique.length());
+	  p_j_final = NumericVector(p_j.length()  + which_closed_unique.length());
+	} else {
+	  q_j_final = NumericVector(q_j.length());
+	  p_j_final = NumericVector(p_j.length());
+	}
+	
 
 	for (int i = 0; i < q_j.length(); i++) {
 		q_j_final(i) = q_j(i);
 		p_j_final(i) = p_j(i);
 	}
-	for (int i = 0; i < num_closed; i++) {
-		q_j_final(i + q_j.length()) = which_closed(i);
-		p_j_final(i + p_j.length()) = which_closed(i);
+	if (Rcpp::traits::is_nan<REALSXP>(set_lower[0])) {
+	  for (int i = 0; i < which_closed_unique.length(); i++) {
+	    q_j_final(i + q_j.length()) = which_closed_unique(i);
+	    p_j_final(i + p_j.length()) = which_closed_unique(i);
+	  }
 	}
 
 	q_j_final = q_j_final.sort();

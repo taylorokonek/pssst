@@ -25,7 +25,9 @@
 #' @param numerical_grad boolean for whether gradient should be calculated numerically or
 #' analytically. Analytical gradient is faster, but only available for Weibull and Exponential distributions
 #' at the moment.
-#' @param dist distribution. Currently supports "weibull", "exponential"
+#' @param dist distribution. Currently supports "weibull", "exponential", "piecewise_exponential"
+#' @param breakpoints if distribution is "piecewise_exponential", the breakpoints (in months) where
+#' the distribution should be divided
 #' @return A list containing: 
 #' \itemize{
 #' \item result: a dataframe of summarized results
@@ -56,21 +58,40 @@ surv_synthetic <- function(df,
                            t_1i = "t_1i",
                            only_scale = FALSE,
                            numerical_grad = FALSE,
-                           dist = "weibull") {
+                           dist = "weibull",
+                           breakpoints = NA) {
   
   # error checking
-  if (!(dist %in% c("weibull", "exponential"))) {
-    stop("surv_synthetic currently only supports weibull and exponential distribution")
-    if (only_scale & (dist != "weibull")) {
-      stop("only_scale = TRUE is only available for dist = 'weibull'")
+  
+  # distribution errors
+  if (!(dist %in% c("weibull", "exponential", "piecewise_exponential"))) {
+    stop("surv_synthetic currently only supports weibull, exponential, and piecewise exponential distributions")
+  }
+  if (only_scale & (dist != "weibull")) {
+    stop("only_scale = TRUE is only available for dist = 'weibull'")
+  }
+  if ((dist == "piecewise_exponential") & is.na(breakpoints[1])) {
+    stop("breakpoints must be set if using piecewise exponential distribution")
+  }
+  if (!is.na(breakpoints[1]) & dist != "piecewise_exponential") {
+    message(paste0("breakpoints not available for distribution ",dist,", and will not be used"))
+  }
+  
+  if (dist %in% c("exponential", "weibull")) {
+    if (!numerical_grad) {
+      stop("analytical gradient only available for exponential and weibull dist. must set numerical_grad = TRUE")
     }
   }
+  
+  # remove 0 and Inf from breakpoints, if needed, and sort
   
   # set distribution to integer
   if (dist == "weibull") {
     dist <- 1
-  } else {
+  } else if (dist == "exponential") {
     dist <- 0
+  } else {
+    dist <- 2
   }
   
   # make new df with appropriate columns
@@ -89,9 +110,9 @@ surv_synthetic <- function(df,
   
   # pivot wider
   df <- df %>%
-    pivot_wider(id_cols = c(individual, household, cluster, strata, weights, I_i, A_i, t_i, t_0i, t_1i),
-                names_from = p,
-                values_from = c(a_pi, l_p))
+    tidyr::pivot_wider(id_cols = c(individual, household, cluster, strata, weights, I_i, A_i, t_i, t_0i, t_1i),
+                       names_from = p,
+                       values_from = c(a_pi, l_p))
   
   # get column name indicators for a_pi and l_p
   a_pi_cols <- paste0("a_pi_",1:n_periods)
@@ -108,6 +129,8 @@ surv_synthetic <- function(df,
                        weights = df$weights,
                        shape_par_ids = 1,
                        dist = dist,
+                       breakpoints = breakpoints,
+                       num_periods = n_periods,
                        method = "BFGS",
                        hessian = TRUE)
     end_time <- Sys.time()
@@ -118,11 +141,13 @@ surv_synthetic <- function(df,
       test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
       for (i in 1:nrow(df)) {
         test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
-                                                    x = optim_res$par, 
-                                                    data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
-                                                    weights = 1,
-                                                    shape_par_ids = 1,
-                                                    dist = dist)
+                                          x = optim_res$par, 
+                                          data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
+                                          weights = 1,
+                                          shape_par_ids = 1,
+                                          dist = dist,
+                                          breakpoints = breakpoints,
+                                          num_periods = n_periods)
       }
     } else {
       test_scores <- rcpp_gradient_multi(x_df = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
@@ -143,6 +168,8 @@ surv_synthetic <- function(df,
                          weights = df$weights,
                          shape_par_ids = 1:n_periods,
                          dist = dist,
+                         breakpoints = breakpoints,
+                         num_periods = n_periods,
                          method = "BFGS",
                          hessian = TRUE)
       end_time <- Sys.time()
@@ -157,7 +184,9 @@ surv_synthetic <- function(df,
                                             data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
                                             weights = 1,
                                             shape_par_ids = 1:nperiods,
-                                            dist = dist)
+                                            dist = dist,
+                                            breakpoints = breakpoints,
+                                            num_periods = n_periods)
         }
       } else {
         test_scores <- rcpp_gradient_multi(x_df = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
@@ -176,6 +205,8 @@ surv_synthetic <- function(df,
                          weights = df$weights,
                          shape_par_ids = NA,
                          dist = dist,
+                         breakpoints = breakpoints,
+                         num_periods = n_periods,
                          method = "BFGS",
                          hessian = TRUE)
       end_time <- Sys.time()
@@ -189,8 +220,10 @@ surv_synthetic <- function(df,
                                             x = optim_res$par, 
                                             data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
                                             weights = 1,
-                                            shape_par_ids = 1,
-                                            dist = 1)
+                                            shape_par_ids = NA,
+                                            dist = 1,
+                                            breakpoints = breakpoints,
+                                            num_periods = n_periods)
           test_scores <- test_scores[,-1]
         }
       } else {
@@ -200,6 +233,37 @@ surv_synthetic <- function(df,
                                            dist = 1)
         test_scores <- test_scores[,-1]
       }
+      
+      # piecewise exponential
+    } else if (dist == 2) {
+      message("fitting model")
+      start_time <- Sys.time()
+      optim_res <- optim(par = c(rep(15, n_periods * (length(breakpoints) + 1))),
+                         fn = optim_fn,
+                         data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
+                         weights = df$weights,
+                         shape_par_ids = NA,
+                         dist = dist,
+                         breakpoints = breakpoints,
+                         num_periods = n_periods,
+                         method = "BFGS",
+                         hessian = TRUE)
+      end_time <- Sys.time()
+      end_time - start_time
+
+      message("computing finite population variance")
+      
+        test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
+        for (i in 1:nrow(df)) {
+          test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
+                                            x = optim_res$par, 
+                                            data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
+                                            weights = 1,
+                                            shape_par_ids = NA,
+                                            dist = dist,
+                                            breakpoints = breakpoints,
+                                            num_periods = n_periods)
+        }
       
     }
     
@@ -259,6 +323,32 @@ surv_synthetic <- function(df,
       ret_df$U5MR_var <- diag(delta_vmat)
       ret_df$U5MR_upper <- ret_df$U5MR + 1.96 * sqrt(ret_df$U5MR_var)
       ret_df$U5MR_lower <- ret_df$U5MR - 1.96 * sqrt(ret_df$U5MR_var)
+      
+      # piecewise exponential
+    } else if (dist == 2) {
+      # get breakpoints in form (a,b]
+      breakpoints_full <- sort(unique(c(0,breakpoints,Inf)))
+      breakpoints_lower <- breakpoints_full[-length(breakpoints_full)]
+      breakpoints_upper <- breakpoints_full[-1]
+      breakpoint_intervals <- paste0("[", breakpoints_lower, ",", breakpoints_upper, "]")
+      
+      ret_df <- data.frame(period = 1:n_periods)
+      ret_df <- cbind(ret_df, data.frame(matrix(est, nrow = n_periods, byrow = TRUE)))
+      colnames(ret_df)[2:ncol(ret_df)] <- paste0("log_scale_mean_",breakpoint_intervals)
+      
+      ret_df <- cbind(ret_df, data.frame(matrix(diag(vmat), nrow = n_periods, byrow = TRUE)))
+      colnames(ret_df)[(3 + length(breakpoints)):ncol(ret_df)] <- paste0("log_scale_var_", breakpoint_intervals)
+      
+      # add u5mr, nmr, imr to ret_df
+      ret_df$U5MR <- NA
+      for (i in 1:nrow(ret_df)) {
+        ret_df$U5MR[i] <- p_piecewise_exponential(60, log_scales = unlist(ret_df[i,c(2:(length(breakpoints) + 2))]), breakpoints = breakpoints)
+      }
+      
+      # delta_vmat <- p_exponential_deltamethod(60, par = est, vmat = vmat)
+      # ret_df$U5MR_var <- diag(delta_vmat)
+      # ret_df$U5MR_upper <- ret_df$U5MR + 1.96 * sqrt(ret_df$U5MR_var)
+      # ret_df$U5MR_lower <- ret_df$U5MR - 1.96 * sqrt(ret_df$U5MR_var)
     }
     
   }

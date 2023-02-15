@@ -65,13 +65,24 @@ format_dhs <- function(df,
   
   # remove individuals born before min(year_cut)
   num_before <- length(which(births$year_born < min(year_cut)))
-  message(paste0("Removing ", num_before, " children born before ", min(year_cut)))
+  if(num_before > 0) {
+    message(paste0("Removing ", num_before, " children born before ", min(year_cut)))
+  }
   births <- births %>% filter(year_born >= min(year_cut))
   
-  # remove individuals born after max(year_cut)
+  # remove individuals born after max_year
   num_after <- length(which(births$year_born >= max_year))
-  message(paste0("Removing ", num_after, " children born after ", max_year))
+  if (num_after > 0) {
+    message(paste0("Removing ", num_after, " children born after ", max_year))
+  }
   births <- births %>% filter(year_born < max_year)
+  
+  # remove individuals who died after max(year_cut)
+  num_after_died <- length(which(births$year_died >= max_year))
+  if (num_after_died > 0) {
+    message(paste0("Removing ", num_after_died, " children who died after ", max_year))
+  }
+  births <- births %>% filter(is.na(year_died) | (year_died < max_year))
   
   # if a right_censor_time is specified, do that
   if (!is.na(right_censor_time)) {

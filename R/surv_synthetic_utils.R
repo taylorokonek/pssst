@@ -5,25 +5,56 @@
 #' @param weights vector of survey weights
 #' @param shape_par_ids which pars are shape parameters
 #' @param dist integer denoting which distribution to use
+#' @param num_periods number of periods in dataframe
 #' @return negative log likelihood
 #' 
 #' @author Taylor Okonek
 #' @noRd
 #' @keywords internal
-optim_fn <- function(par, data, weights, shape_par_ids, dist) {
+optim_fn <- function(par, data, weights, shape_par_ids, dist, breakpoints,
+                     num_periods) {
+  # weibull
   if (dist == 1) {
-    -sum(rcpp_loglik_multi(x_df = data, 
-                           log_shapes = par[shape_par_ids], 
-                           log_scales = par[-shape_par_ids], 
-                           dist = dist) * weights)
+    pars_per_period <- length(par[-shape_par_ids]) / num_periods
+    par_period_id <- rep(1:num_periods, each = pars_per_period)
+    
+    ret <- -sum(rcpp_loglik_multi(x_df = data, 
+                                  num_periods = num_periods,
+                                  log_shapes = par[shape_par_ids], 
+                                  log_scales = par[-shape_par_ids], 
+                                  dist = dist,
+                                  breakpoints = breakpoints,
+                                  par_period_id = par_period_id) * weights)
+    
+    # exponential, piecewise exponential
   } else if (dist == 0) {
+    pars_per_period <- length(par) / num_periods
+    par_period_id <- rep(1:num_periods, each = pars_per_period)
+    
     # can fit exponential likelihood using weibull code with shapes == 1
-    -sum(rcpp_loglik_multi(x_df = data, 
+    ret <- -sum(rcpp_loglik_multi(x_df = data, 
+                                  num_periods = num_periods,
+                                  log_shapes = 0, 
+                                  log_scales = par, 
+                                  dist = 1,
+                                  breakpoints = breakpoints,
+                                  par_period_id = par_period_id) * weights)
+    
+  } else if (dist == 2) {
+    pars_per_period <- length(par) / num_periods
+    par_period_id <- rep(1:num_periods, each = pars_per_period)
+    
+    # can fit exponential likelihood using weibull code with shapes == 1
+    a <- rcpp_loglik_multi(x_df = data, 
+                           num_periods = num_periods,
                            log_shapes = 0, 
                            log_scales = par, 
-                           dist = 1) * weights)
+                           dist = dist,
+                           breakpoints = breakpoints,
+                           par_period_id = par_period_id)
+    ret <- -sum(a * weights)
   }
-  
+  return(ret)
 }
 
 #' Function to input to grad, calls rcpp_loglik_multi
@@ -33,25 +64,73 @@ optim_fn <- function(par, data, weights, shape_par_ids, dist) {
 #' @param weights vector of survey weights
 #' @param shape_par_ids which pars are shape parameters
 #' @param dist integer denoting which distribution to use
+#' @param num_periods numer of periods in dataframe
 #' @return negative log likelihood
 #' 
 #' @author Taylor Okonek
 #' @noRd
 #' @keywords internal
-optim_fn_grad <- function(par, data, weights, shape_par_ids, dist) {
+optim_fn_grad <- function(par, data, weights, shape_par_ids, dist,
+                          num_periods, breakpoints) {
   if (dist == 1) {
-    sum(rcpp_loglik_multi(x_df = data, 
-                           log_shapes = par[shape_par_ids], 
-                           log_scales = par[-shape_par_ids], 
-                           dist = dist) * weights)
+    pars_per_period <- length(par[-shape_par_ids]) / num_periods
+    par_period_id <- rep(1:num_periods, each = pars_per_period)
+    
+    a <- sum(rcpp_loglik_multi(x_df = data, 
+                          num_periods = num_periods,
+                          log_shapes = par[shape_par_ids], 
+                          log_scales = par[-shape_par_ids], 
+                          dist = dist,
+                          breakpoints = breakpoints,
+                          par_period_id = par_period_id) * weights)
   } else if (dist == 0) {
+    pars_per_period <- length(par) / num_periods
+    par_period_id <- rep(1:num_periods, each = pars_per_period)
+    
     # can fit exponential likelihood using weibull code with shapes == 1
-    sum(rcpp_loglik_multi(x_df = data, 
-                           log_shapes = 0, 
-                           log_scales = par, 
-                           dist = 1) * weights)
+    a <- sum(rcpp_loglik_multi(x_df = data, 
+                          num_periods = num_periods,
+                          log_shapes = 0, 
+                          log_scales = par, 
+                          dist = 1,
+                          breakpoints = breakpoints,
+                          par_period_id = par_period_id) * weights)
+  } else if (dist == 2) {
+    pars_per_period <- length(par) / num_periods
+    par_period_id <- rep(1:num_periods, each = pars_per_period)
+    
+    a <- sum(rcpp_loglik_multi(x_df = data, 
+                          num_periods = num_periods,
+                          log_shapes = 0, 
+                          log_scales = par, 
+                          dist = dist,
+                          breakpoints = breakpoints,
+                          par_period_id = par_period_id) * weights)
   }
   
+  return(a)
+  
+}
+
+#' CDF for piecewise exponential distribution
+#'
+#' @param x value
+#' @param log_scales
+#' @param breakpoints
+#' @param log return log cdf or no
+#' @return cdf
+#' 
+#' @author Taylor Okonek
+#' @noRd
+#' @keywords internal
+p_piecewise_exponential <- function(x, log_scales, breakpoints, log = FALSE) {
+  # F(x) = 1 - exp(-H(x))
+  H_x <- rcpp_hazard_integral(0, x, 1, log_scales, 2, breakpoints)
+  if (log) {
+    log(1 - exp(-H_x))
+  } else {
+    1 - exp(-H_x)
+  }
 }
 
 #' CDF for weibull distribution
@@ -163,8 +242,27 @@ p_exponential_deltamethod <- function(x, par, vmat) {
   return(delta_vmat)
 }
 
+#' cdf delta method for piecewise exponential distribution 
+#' can be used for u5mr (x = 60), imr (x = 12), nmr (x = 1), etc.
+#' 
+#' @param x value
+#' @param par c(log_scale)
+#' @param vmat vcov matrix for par
+#' @return delta method variance for cdf evaluated at x
+#' 
+#' @author Taylor Okonek
+#' @noRd
+#' @keywords internal
+p_piecewise_exponential_deltamethod <- function(x, par, vmat) {
+  
+  grad <- diag(length(par)) * d_p_exponential_log_scale(x, par)
+  delta_vmat <- t(grad) %*% vmat %*% grad
+  return(delta_vmat)
+}
 
 
+
+D(expression(1 - exp(-beta_1 * x_3 - beta_2 * x_2 - beta_1 * x_1)), "x_1")
 
 
 

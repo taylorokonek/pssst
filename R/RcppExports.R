@@ -13,8 +13,12 @@ rcpp_gradient_multi <- function(x_df, log_shapes, log_scales, dist) {
     .Call(`_pssst_rcpp_gradient_multi`, x_df, log_shapes, log_scales, dist)
 }
 
-rcpp_loglik_multi <- function(x_df, log_shapes, log_scales, dist) {
-    .Call(`_pssst_rcpp_loglik_multi`, x_df, log_shapes, log_scales, dist)
+rcpp_loglik_multi <- function(x_df, num_periods, log_shapes, log_scales, dist, breakpoints, par_period_id) {
+    .Call(`_pssst_rcpp_loglik_multi`, x_df, num_periods, log_shapes, log_scales, dist, breakpoints, par_period_id)
+}
+
+rcpp_hazard_integral <- function(lower_bound, upper_bound, log_shape, log_scale_vec, dist, breakpoints) {
+    .Call(`_pssst_rcpp_hazard_integral`, lower_bound, upper_bound, log_shape, log_scale_vec, dist, breakpoints)
 }
 
 rcpp_turnbull <- function(niter, t0, t1, lefttrunc, righttrunc, weights, set_lower, set_upper) {

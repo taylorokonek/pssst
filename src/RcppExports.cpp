@@ -52,16 +52,35 @@ BEGIN_RCPP
 END_RCPP
 }
 // rcpp_loglik_multi
-NumericVector rcpp_loglik_multi(DataFrame x_df, NumericVector log_shapes, NumericVector log_scales, int dist);
-RcppExport SEXP _pssst_rcpp_loglik_multi(SEXP x_dfSEXP, SEXP log_shapesSEXP, SEXP log_scalesSEXP, SEXP distSEXP) {
+NumericVector rcpp_loglik_multi(DataFrame x_df, int num_periods, NumericVector log_shapes, NumericVector log_scales, int dist, NumericVector breakpoints, NumericVector par_period_id);
+RcppExport SEXP _pssst_rcpp_loglik_multi(SEXP x_dfSEXP, SEXP num_periodsSEXP, SEXP log_shapesSEXP, SEXP log_scalesSEXP, SEXP distSEXP, SEXP breakpointsSEXP, SEXP par_period_idSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< DataFrame >::type x_df(x_dfSEXP);
+    Rcpp::traits::input_parameter< int >::type num_periods(num_periodsSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type log_shapes(log_shapesSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type log_scales(log_scalesSEXP);
     Rcpp::traits::input_parameter< int >::type dist(distSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcpp_loglik_multi(x_df, log_shapes, log_scales, dist));
+    Rcpp::traits::input_parameter< NumericVector >::type breakpoints(breakpointsSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type par_period_id(par_period_idSEXP);
+    rcpp_result_gen = Rcpp::wrap(rcpp_loglik_multi(x_df, num_periods, log_shapes, log_scales, dist, breakpoints, par_period_id));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rcpp_hazard_integral
+double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints);
+RcppExport SEXP _pssst_rcpp_hazard_integral(SEXP lower_boundSEXP, SEXP upper_boundSEXP, SEXP log_shapeSEXP, SEXP log_scale_vecSEXP, SEXP distSEXP, SEXP breakpointsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type lower_bound(lower_boundSEXP);
+    Rcpp::traits::input_parameter< double >::type upper_bound(upper_boundSEXP);
+    Rcpp::traits::input_parameter< double >::type log_shape(log_shapeSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type log_scale_vec(log_scale_vecSEXP);
+    Rcpp::traits::input_parameter< int >::type dist(distSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type breakpoints(breakpointsSEXP);
+    rcpp_result_gen = Rcpp::wrap(rcpp_hazard_integral(lower_bound, upper_bound, log_shape, log_scale_vec, dist, breakpoints));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -88,7 +107,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_pssst_rcpp_expand_surv", (DL_FUNC) &_pssst_rcpp_expand_surv, 4},
     {"_pssst_rcpp_expand_surv_helper", (DL_FUNC) &_pssst_rcpp_expand_surv_helper, 3},
     {"_pssst_rcpp_gradient_multi", (DL_FUNC) &_pssst_rcpp_gradient_multi, 4},
-    {"_pssst_rcpp_loglik_multi", (DL_FUNC) &_pssst_rcpp_loglik_multi, 4},
+    {"_pssst_rcpp_loglik_multi", (DL_FUNC) &_pssst_rcpp_loglik_multi, 7},
+    {"_pssst_rcpp_hazard_integral", (DL_FUNC) &_pssst_rcpp_hazard_integral, 6},
     {"_pssst_rcpp_turnbull", (DL_FUNC) &_pssst_rcpp_turnbull, 8},
     {NULL, NULL, 0}
 };

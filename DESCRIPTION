@@ -22,6 +22,7 @@ Imports:
     Rcpp (>= 1.0.9),
     dplyr,
     survey,
+    numDeriv,
     lubridate
 LinkingTo: 
     Rcpp
