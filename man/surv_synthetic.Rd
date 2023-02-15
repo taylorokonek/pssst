@@ -20,7 +20,9 @@ surv_synthetic(
   t_0i = "t_0i",
   t_1i = "t_1i",
   only_scale = FALSE,
-  dist = "weibull"
+  numerical_grad = FALSE,
+  dist = "weibull",
+  breakpoints = NA
 )
 }
 \arguments{
@@ -58,11 +60,14 @@ boundary of a time period in \code{df}}
 \item{only_scale}{boolean for varying only the scale parameter across time period. Defaults to
 \code{FALSE}. This option is only available for dist = "weibull"}
 
-\item{dist}{distribution. Currently supports "weibull", "exponential"}
-
 \item{numerical_grad}{boolean for whether gradient should be calculated numerically or
 analytically. Analytical gradient is faster, but only available for Weibull and Exponential distributions
 at the moment.}
+
+\item{dist}{distribution. Currently supports "weibull", "exponential", "piecewise_exponential"}
+
+\item{breakpoints}{if distribution is "piecewise_exponential", the breakpoints (in months) where
+the distribution should be divided}
 }
 \value{
 A list containing:

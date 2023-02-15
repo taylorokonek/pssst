@@ -10,11 +10,13 @@ The package currently supports the following types of survival data:
 
 * Interval-censored
 * Right-censored
+* Exactly observed
 
 The package currently supports the following parametric distributions:
 
 * Exponential
 * Weibull
+* Piecewise Exponential
 
 ## Installation
 

@@ -115,8 +115,8 @@ optim_fn_grad <- function(par, data, weights, shape_par_ids, dist,
 #' CDF for piecewise exponential distribution
 #'
 #' @param x value
-#' @param log_scales
-#' @param breakpoints
+#' @param log_scales log scales
+#' @param breakpoints breakpoints
 #' @param log return log cdf or no
 #' @return cdf
 #' 
