@@ -25,9 +25,18 @@
 #' @param numerical_grad boolean for whether gradient should be calculated numerically or
 #' analytically. Analytical gradient is faster, but only available for Weibull and Exponential distributions
 #' at the moment.
-#' @param dist distribution. Currently supports "weibull", "exponential", "piecewise_exponential"
+#' @param dist distribution. Currently supports "weibull", "exponential", "piecewise_exponential", "gengamma"
 #' @param breakpoints if distribution is "piecewise_exponential", the breakpoints (in months) where
 #' the distribution should be divided
+#' @details We use the original generalized gamma distribution
+#' described in Stacy 1962, where if $\omega \sim Gamma(k, 1)$, then $x = \exp(\omega / shape + \log(scale))$
+#' follows the original generalized gamma distribution. With $shape = b > 0$ and $scale = a > 0$, $x$
+#' has the pdf
+#' $$
+#' f(x \mid a, b, k) = \frac{b}{\Gamma(k)} \frac{x^{bk - 1}}{a^{bk}} \exp(-(x/a)^b)
+#' $$
+#' We note that an alternative parameterisation developed in Prentice (1974) is typically preferred,
+#' as it is more numerically stable in some cases.
 #' @return A list containing: 
 #' \itemize{
 #' \item result: a dataframe of summarized results
@@ -64,8 +73,8 @@ surv_synthetic <- function(df,
   # error checking
   
   # distribution errors
-  if (!(dist %in% c("weibull", "exponential", "piecewise_exponential"))) {
-    stop("surv_synthetic currently only supports weibull, exponential, and piecewise exponential distributions")
+  if (!(dist %in% c("weibull", "exponential", "piecewise_exponential", "gengamma"))) {
+    stop("surv_synthetic currently only supports weibull, exponential, piecewise exponential, and generalized gamma distributions")
   }
   if (only_scale & (dist != "weibull")) {
     stop("only_scale = TRUE is only available for dist = 'weibull'")
@@ -77,21 +86,26 @@ surv_synthetic <- function(df,
     message(paste0("breakpoints not available for distribution ",dist,", and will not be used"))
   }
   
-  if (dist %in% c("exponential", "weibull")) {
+  if (!(dist %in% c("exponential", "weibull"))) {
     if (!numerical_grad) {
       stop("analytical gradient only available for exponential and weibull dist. must set numerical_grad = TRUE")
     }
   }
   
   # remove 0 and Inf from breakpoints, if needed, and sort
+  if (!is.na(breakpoints)) {
+    breakpoints <- sort(breakpoints[!(breakpoints %in% c(0, Inf))])
+  }
   
   # set distribution to integer
   if (dist == "weibull") {
     dist <- 1
   } else if (dist == "exponential") {
     dist <- 0
-  } else {
+  } else if (dist == "piecewise_exponential") {
     dist <- 2
+  } else {
+    dist <- 3
   }
   
   # make new df with appropriate columns
@@ -265,6 +279,36 @@ surv_synthetic <- function(df,
                                             num_periods = n_periods)
         }
       
+      # generalized gamma
+    } else if (dist == 3) {
+      message("fitting model")
+      start_time <- Sys.time()
+      optim_res <- optim(par = c(rep(1,n_periods), rep(1, n_periods * 2)),
+                         fn = optim_fn,
+                         data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
+                         weights = df$weights,
+                         shape_par_ids = 1:n_periods,
+                         dist = dist,
+                         breakpoints = breakpoints,
+                         num_periods = n_periods,
+                         method = "BFGS",
+                         hessian = TRUE)
+      end_time <- Sys.time()
+      end_time - start_time
+      
+      message("computing finite population variance")
+      
+      test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
+      for (i in 1:nrow(df)) {
+        test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
+                                          x = optim_res$par, 
+                                          data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
+                                          weights = 1,
+                                          shape_par_ids = 1:n_periods,
+                                          dist = dist,
+                                          breakpoints = breakpoints,
+                                          num_periods = n_periods)
+      }
     }
     
   }
@@ -345,10 +389,22 @@ surv_synthetic <- function(df,
         ret_df$U5MR[i] <- p_piecewise_exponential(60, log_scales = unlist(ret_df[i,c(2:(length(breakpoints) + 2))]), breakpoints = breakpoints)
       }
       
-      # delta_vmat <- p_exponential_deltamethod(60, par = est, vmat = vmat)
-      # ret_df$U5MR_var <- diag(delta_vmat)
-      # ret_df$U5MR_upper <- ret_df$U5MR + 1.96 * sqrt(ret_df$U5MR_var)
-      # ret_df$U5MR_lower <- ret_df$U5MR - 1.96 * sqrt(ret_df$U5MR_var)
+    } else if (dist == 3) {
+      ret_df <- data.frame(period = 1:n_periods,
+                           log_sigma_mean = est[1:n_periods])
+      ret_df <- cbind(ret_df, data.frame(est[(n_periods +1 ):length(est)] %>% matrix(nrow = n_periods, byrow = TRUE)))
+      colnames(ret_df)[c(3:4)] <- c("log_mu_mean", "log_Q_mean")
+      
+      ret_df$log_sigma_var <- diag(vmat)[1:n_periods]
+      ret_df <- cbind(ret_df, data.frame(diag(vmat)[(n_periods +1 ):length(est)] %>% matrix(nrow = n_periods, byrow = TRUE)))
+      colnames(ret_df)[c(6:7)] <- c("log_mu_var", "log_Q_var")
+      
+      # add u5mr, nmr, imr to ret_df
+      ret_df$U5MR <- NA
+      for (i in 1:nrow(ret_df)) {
+        ret_df$U5MR[i] <- rcpp_F_gengamma(60, exp(ret_df$log_Q_mean)[i], exp(ret_df$log_mu_mean)[i], exp(ret_df$log_sigma_mean)[i], 1, 0)
+      }
+    
     }
     
   }

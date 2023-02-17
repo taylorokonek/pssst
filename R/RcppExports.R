@@ -17,6 +17,14 @@ rcpp_loglik_multi <- function(x_df, num_periods, log_shapes, log_scales, dist, b
     .Call(`_pssst_rcpp_loglik_multi`, x_df, num_periods, log_shapes, log_scales, dist, breakpoints, par_period_id)
 }
 
+rcpp_F_gengamma <- function(x, alpha, beta, gamma, lower_tail, give_log) {
+    .Call(`_pssst_rcpp_F_gengamma`, x, alpha, beta, gamma, lower_tail, give_log)
+}
+
+rcpp_f_gengamma <- function(x, alpha, beta, gamma, log_pdf) {
+    .Call(`_pssst_rcpp_f_gengamma`, x, alpha, beta, gamma, log_pdf)
+}
+
 rcpp_hazard_integral <- function(lower_bound, upper_bound, log_shape, log_scale_vec, dist, breakpoints) {
     .Call(`_pssst_rcpp_hazard_integral`, lower_bound, upper_bound, log_shape, log_scale_vec, dist, breakpoints)
 }

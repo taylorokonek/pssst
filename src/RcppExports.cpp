@@ -68,6 +68,37 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rcpp_F_gengamma
+double rcpp_F_gengamma(double x, double alpha, double beta, double gamma, bool lower_tail, bool give_log);
+RcppExport SEXP _pssst_rcpp_F_gengamma(SEXP xSEXP, SEXP alphaSEXP, SEXP betaSEXP, SEXP gammaSEXP, SEXP lower_tailSEXP, SEXP give_logSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type x(xSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< double >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
+    Rcpp::traits::input_parameter< bool >::type lower_tail(lower_tailSEXP);
+    Rcpp::traits::input_parameter< bool >::type give_log(give_logSEXP);
+    rcpp_result_gen = Rcpp::wrap(rcpp_F_gengamma(x, alpha, beta, gamma, lower_tail, give_log));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rcpp_f_gengamma
+double rcpp_f_gengamma(double x, double alpha, double beta, double gamma, bool log_pdf);
+RcppExport SEXP _pssst_rcpp_f_gengamma(SEXP xSEXP, SEXP alphaSEXP, SEXP betaSEXP, SEXP gammaSEXP, SEXP log_pdfSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type x(xSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< double >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
+    Rcpp::traits::input_parameter< bool >::type log_pdf(log_pdfSEXP);
+    rcpp_result_gen = Rcpp::wrap(rcpp_f_gengamma(x, alpha, beta, gamma, log_pdf));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rcpp_hazard_integral
 double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints);
 RcppExport SEXP _pssst_rcpp_hazard_integral(SEXP lower_boundSEXP, SEXP upper_boundSEXP, SEXP log_shapeSEXP, SEXP log_scale_vecSEXP, SEXP distSEXP, SEXP breakpointsSEXP) {
@@ -108,6 +139,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_pssst_rcpp_expand_surv_helper", (DL_FUNC) &_pssst_rcpp_expand_surv_helper, 3},
     {"_pssst_rcpp_gradient_multi", (DL_FUNC) &_pssst_rcpp_gradient_multi, 4},
     {"_pssst_rcpp_loglik_multi", (DL_FUNC) &_pssst_rcpp_loglik_multi, 7},
+    {"_pssst_rcpp_F_gengamma", (DL_FUNC) &_pssst_rcpp_F_gengamma, 6},
+    {"_pssst_rcpp_f_gengamma", (DL_FUNC) &_pssst_rcpp_f_gengamma, 5},
     {"_pssst_rcpp_hazard_integral", (DL_FUNC) &_pssst_rcpp_hazard_integral, 6},
     {"_pssst_rcpp_turnbull", (DL_FUNC) &_pssst_rcpp_turnbull, 8},
     {NULL, NULL, 0}

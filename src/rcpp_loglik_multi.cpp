@@ -69,7 +69,6 @@ NumericVector rcpp_loglik_multi(DataFrame x_df, int num_periods, NumericVector l
   NumericMatrix a_pi_mat, l_p_mat;
   int i;
   int j;
-  int num_lived = 0;
   int which_vals_counter = 0;
   NumericVector j_vec(par_period_id.length());
   NumericVector which_vals(par_period_id.length() / num_periods);

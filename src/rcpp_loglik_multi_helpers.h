@@ -16,13 +16,58 @@ NumericMatrix testDFtoNM1(DataFrame x) {
   return y;
 }
 
+// input shape = Q, location = omega, scale = sigma
+// [[Rcpp::export]]
+double rcpp_F_gengamma(double x, double alpha, double beta, double gamma, bool lower_tail, bool give_log) {
+  // double d = gamma * alpha;
+  // double a = 1/beta;
+  // double p = gamma;
+
+  // // double numerator = boost::math::tgamma_lower(alpha, pow(x/a, gamma));
+  // double numerator = boost::math::gamma_p(alpha, pow(x/a, gamma)); // use normalized/regularized lower incomplete gamma function
+  double Q = alpha;
+  double mu = beta;
+  double sigma = gamma;
+  double omega = -(mu - log(x)) / sigma;
+
+  // double ret_val = boost::math::gamma_p(pow(Q, -2), pow(exp(-omega) * exp(-2 * sigma * log(Q) / Q) * x, Q / sigma));
+  // double ret_val = R::pgamma(pow(exp(-omega) * exp(-2 * sigma * log(Q) / Q) * x, Q / sigma), pow(Q, -2), 1, 1, 0);
+  double ret_val = R::pgamma(pow(Q, -2) * exp(Q * omega), pow(Q, -2), 1, lower_tail, give_log);
+
+  // double denominator = tgamma(alpha);
+  // double ret_val = numerator;
+
+  return(ret_val);
+}
+
+// input shape = Q, location = omega, scale = sigma
+// [[Rcpp::export]]
+double rcpp_f_gengamma(double x, double alpha, double beta, double gamma, bool log_pdf) {
+  double Q = alpha;
+  double mu = beta;
+  double sigma = gamma;
+  double omega = -(mu - log(x)) / sigma;
+
+  // get log pdf
+  double lpdf = log(abs(Q)) + pow(Q, -2) * log(pow(Q, -2)) - log(sigma) - log(x) - lgamma(pow(Q, -2)) + pow(Q, -2) * (Q * omega - exp(Q * omega));
+  double ret_val;
+  if (log_pdf) {
+    ret_val = lpdf;
+  } else {
+    ret_val = exp(lpdf);
+  }
+  return(ret_val);
+}
+
 // distributions:
 // 0 = Exponential
 // 1 = Weibull
 // 2 = Piecewise Exponential
+// 3 = Generalized Gamma
 // [[Rcpp::export]]
 double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints) {
-  NumericVector rate_param_vec = 1/exp(log_scale_vec);
+  NumericVector scale_vec = exp(log_scale_vec);
+  NumericVector rate_param_vec = 1/scale_vec;
   double shape_param = exp(log_shape);
   double ret_val = 0;
   int num_true = 0;
@@ -105,17 +150,29 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
     }
 
 
+  } else if (dist == 3) {
+
+    // rate_param_vec = c(beta, alpha)
+    // shape_param = gamma
+
+    // ret_val = -log(1 - rcpp_F_gengamma(upper_bound, scale_vec[1], scale_vec[0], shape_param, 1, 0)) + log(1 - rcpp_F_gengamma(lower_bound, scale_vec[1], scale_vec[0], shape_param, 1, 0));
+    ret_val = - rcpp_F_gengamma(upper_bound, scale_vec[1], scale_vec[0], shape_param, 0, 1) + rcpp_F_gengamma(lower_bound, scale_vec[1], scale_vec[0], shape_param, 0, 1);
+
   }
   return(ret_val);
 }
 
 // log hazard
-// 0 = Exponential / Piecewise exponential
+// 0 = Exponential
 // 1 = Weibull
+// 2 = Piecewise exponential
+// 3 = Generalized gamma
 double rcpp_l_hazard(double x, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints) {
-  NumericVector rate_param_vec = 1/exp(log_scale_vec);
+  NumericVector scale_vec = exp(log_scale_vec);
+  NumericVector rate_param_vec = 1/scale_vec;
   double shape_param = exp(log_shape);
   double ret_val = 0;
+  double numerator, denominator;
 
   if (dist == 0) {
 
@@ -125,12 +182,20 @@ double rcpp_l_hazard(double x, double log_shape, NumericVector log_scale_vec, in
 
     ret_val = log(rate_param_vec[0]) + log(shape_param) + (shape_param - 1) * log(x);
 
-  } else {
+  } else if (dist == 2) {
     // get which parameter corresponds to the age when they died
     LogicalVector temp = x > breakpoints;
     double which_age_bin = sum(temp); // -1 because indexing
     
     ret_val = log(rate_param_vec[which_age_bin]); 
+
+  } else if (dist == 3) {
+    // h(t) = f(t)/(1 - F(t))
+    // rate_param_vec = c(beta, alpha)
+    // shape_param = gamma
+    numerator = rcpp_f_gengamma(x, scale_vec[1], scale_vec[0], shape_param, 1);
+    denominator = rcpp_F_gengamma(x, scale_vec[1], scale_vec[0], shape_param, 0, 1);
+    ret_val = numerator - denominator;
 
   }
   return(ret_val);
@@ -149,3 +214,6 @@ double rcpp_l_pdf(double x, double log_shape, double log_scale, int dist) {
   }
   return(ret_val);
 }
+
+
+
