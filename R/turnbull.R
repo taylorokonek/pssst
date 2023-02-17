@@ -13,13 +13,7 @@
 #' @param period column corresponding to period identification in \code{df}. If specified, separate
 #' Turnbull estimates will be produced for each value in \code{period}.
 #' @param weights column corresponding to weights in \code{df}
-#' @param jackknife_var indicator for whether or not to compute jackknife variance of the estimator.
-#' Will approximate the finite sample variance when sample size is small compared to population size. Defaults
-#' to \code{FALSE}. If \code{jackknife_var} = \code{TRUE}, then both cluster and strata must be specified
-#' @param cluster column corresponding to cluster ID from survey design. Only used if \code{jackknife_var} = \code{TRUE}. 
-#' @param strata column corresponding to strata ID from survey design. Only used if \code{jackknife_var} = \code{TRUE}. 
 #' @param niter number of iterations to run the algorithm
-#' @param niter_jackknife number of iterations to run each resample. Defaults to \code{niter}
 #' @return a list containing the following:
 #' \itemize{
 #' \item a dataframe of final estimates for specific times (and periods)
@@ -36,11 +30,14 @@ turnbull <- function(df,
                      righttrunc = "righttrunc", 
                      period = NA,
                      weights = "weights", 
-                     jackknife_var = FALSE,
-                     cluster = NA,
-                     strata = NA,
-                     niter,
-                     niter_jackknife = niter) {
+                     niter) {
+  
+  # Jackknife variance no longer calculated because it isn't valid
+  # TO DO: delete jackknife var code (for now just comment relevant things)
+  jackknife_var <- FALSE
+  niter_jackknife <- niter
+  # cluster <- NA
+  # strata <- NA
   
   # error checking - TO DO
   if (jackknife_var) {
@@ -52,8 +49,8 @@ turnbull <- function(df,
   # if there are no periods...
   if (is.na(period)) {
     # make cluster and strata factors
-    df$cluster <- factor(df[,cluster])
-    df$strata <- factor(df[,strata])
+    # df$cluster <- factor(df[,cluster])
+    # df$strata <- factor(df[,strata])
     
     # call rcpp_turnbull
     res <- rcpp_turnbull(niter = niter, 
@@ -169,8 +166,8 @@ turnbull <- function(df,
       df_p <- df %>% dplyr::filter(period == sort(unique(df$period))[l])
       
       # make cluster and strata factors
-      df_p$cluster <- factor(df_p[,cluster])
-      df_p$strata <- factor(df_p[,strata])
+      # df_p$cluster <- factor(df_p[,cluster])
+      # df_p$strata <- factor(df_p[,strata])
       
       # call rcpp_turnbull
       res <- rcpp_turnbull(niter = niter, 
