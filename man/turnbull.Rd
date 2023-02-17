@@ -12,11 +12,7 @@ turnbull(
   righttrunc = "righttrunc",
   period = NA,
   weights = "weights",
-  jackknife_var = FALSE,
-  cluster = NA,
-  strata = NA,
-  niter,
-  niter_jackknife = niter
+  niter
 )
 }
 \arguments{
@@ -40,17 +36,7 @@ Turnbull estimates will be produced for each value in \code{period}.}
 
 \item{weights}{column corresponding to weights in \code{df}}
 
-\item{jackknife_var}{indicator for whether or not to compute jackknife variance of the estimator.
-Will approximate the finite sample variance when sample size is small compared to population size. Defaults
-to \code{FALSE}. If \code{jackknife_var} = \code{TRUE}, then both cluster and strata must be specified}
-
-\item{cluster}{column corresponding to cluster ID from survey design. Only used if \code{jackknife_var} = \code{TRUE}.}
-
-\item{strata}{column corresponding to strata ID from survey design. Only used if \code{jackknife_var} = \code{TRUE}.}
-
 \item{niter}{number of iterations to run the algorithm}
-
-\item{niter_jackknife}{number of iterations to run each resample. Defaults to \code{niter}}
 }
 \value{
 a list containing the following:

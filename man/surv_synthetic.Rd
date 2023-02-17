@@ -64,7 +64,7 @@ boundary of a time period in \code{df}}
 analytically. Analytical gradient is faster, but only available for Weibull and Exponential distributions
 at the moment.}
 
-\item{dist}{distribution. Currently supports "weibull", "exponential", "piecewise_exponential"}
+\item{dist}{distribution. Currently supports "weibull", "exponential", "piecewise_exponential", "gengamma"}
 
 \item{breakpoints}{if distribution is "piecewise_exponential", the breakpoints (in months) where
 the distribution should be divided}
@@ -84,6 +84,17 @@ order arrange(time). Each matrix will have rows arranged in order arrange(region
 \description{
 Fits a parametric survival model to DHS data (formatted from \code{format_dhs}) to get survey-weighted
 parameter estimates and finite population variances for parametric survival curves in each time period.
+}
+\details{
+We use the original generalized gamma distribution
+described in Stacy 1962, where if $\omega \sim Gamma(k, 1)$, then $x = \exp(\omega / shape + \log(scale))$
+follows the original generalized gamma distribution. With $shape = b > 0$ and $scale = a > 0$, $x$
+has the pdf
+$$
+f(x \mid a, b, k) = \frac{b}{\Gamma(k)} \frac{x^{bk - 1}}{a^{bk}} \exp(-(x/a)^b)
+$$
+We note that an alternative parameterisation developed in Prentice (1974) is typically preferred,
+as it is more numerically stable in some cases.
 }
 \author{
 Taylor Okonek
