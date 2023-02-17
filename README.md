@@ -17,6 +17,7 @@ The package currently supports the following parametric distributions:
 * Exponential
 * Weibull
 * Piecewise Exponential
+* Generalized Gamma
 
 ## Installation
 
