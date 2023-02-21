@@ -3,6 +3,21 @@
 #' Fits a parametric survival model to DHS data (formatted from \code{format_dhs}) to get survey-weighted
 #' parameter estimates and finite population variances for parametric survival curves in each time period.
 #' 
+#' We use the same parameterization of the generalized gamma distribution
+#' as used in \code{\link{flexsurv}}, as opposed to the original parameterization 
+#' described in Stacy 1962, where if \eqn{\omega \sim Gamma(k, 1)}, then \eqn{x = \exp(\omega / shape + \log(scale))}
+#' follows the original generalized gamma distribution. With \eqn{shape = b > 0} and \eqn{scale = a > 0}, \eqn{x}
+#' has the pdf
+#' 
+#' \deqn{f(x \mid a, b, k) = \frac{b}{\Gamma(k)} \frac{x^{bk - 1}}{a^{bk}} \exp(-(x/a)^b)}
+#' 
+#' The alternative parameterization developed in Prentice (1974) is typically preferred,
+#' as it is more numerically stable in some cases. Under this alternative, if 
+#' \eqn{\gamma \sim Gamma(Q^{-2}, 1)} and \eqn{\omega = \log(Q^2 \gamma) / Q}, then \eqn{x = \exp(\mu + \sigma \omega)}
+#' follows the generalized gamma distribution with pdf
+#' 
+#' \deqn{f(x \mid \mu, \sigma, Q) = \frac{|Q| (Q^{-2}^{Q^{-2}})}{\sigma x \Gamma(Q^{-2})} \exp(Q^{-2}(Q \omega - \exp(Q \omega)))}
+#' 
 #' @param df a dataframe containing the output from \code{format_dhs}, or optionally, dataframe
 #' containing the following columns
 #' @param individual column corresponding to individual ID in \code{df}
@@ -25,18 +40,9 @@
 #' @param numerical_grad boolean for whether gradient should be calculated numerically or
 #' analytically. Analytical gradient is faster, but only available for Weibull and Exponential distributions
 #' at the moment.
-#' @param dist distribution. Currently supports "weibull", "exponential", "piecewise_exponential", "gengamma"
+#' @param dist distribution. Currently supports "weibull", "exponential", "piecewise_exponential", "gengamma", "lognormal"
 #' @param breakpoints if distribution is "piecewise_exponential", the breakpoints (in months) where
 #' the distribution should be divided
-#' @details We use the original generalized gamma distribution
-#' described in Stacy 1962, where if $\omega \sim Gamma(k, 1)$, then $x = \exp(\omega / shape + \log(scale))$
-#' follows the original generalized gamma distribution. With $shape = b > 0$ and $scale = a > 0$, $x$
-#' has the pdf
-#' $$
-#' f(x \mid a, b, k) = \frac{b}{\Gamma(k)} \frac{x^{bk - 1}}{a^{bk}} \exp(-(x/a)^b)
-#' $$
-#' We note that an alternative parameterisation developed in Prentice (1974) is typically preferred,
-#' as it is more numerically stable in some cases.
 #' @return A list containing: 
 #' \itemize{
 #' \item result: a dataframe of summarized results
@@ -49,6 +55,13 @@
 #' } 
 #' 
 #' @author Taylor Okonek
+#' 
+#' @references Stacy, E. W. (1962). A generalization of the gamma
+##' distribution.  Annals of Mathematical Statistics 33:1187-92.
+##' 
+##' Prentice, R. L. (1974). A log gamma model and its maximum likelihood
+##' estimation. Biometrika 61(3):539-544.
+##' 
 #' @export surv_synthetic
 
 surv_synthetic <- function(df,
