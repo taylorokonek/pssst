@@ -64,6 +64,7 @@ double rcpp_f_gengamma(double x, double alpha, double beta, double gamma, bool l
 // 1 = Weibull
 // 2 = Piecewise Exponential
 // 3 = Generalized Gamma
+// 4 = lognormal
 // [[Rcpp::export]]
 double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints) {
   NumericVector scale_vec = exp(log_scale_vec);
@@ -149,7 +150,6 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
       }
     }
 
-
   } else if (dist == 3) {
 
     // rate_param_vec = c(beta, alpha)
@@ -157,8 +157,14 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
 
     // ret_val = -log(1 - rcpp_F_gengamma(upper_bound, scale_vec[1], scale_vec[0], shape_param, 1, 0)) + log(1 - rcpp_F_gengamma(lower_bound, scale_vec[1], scale_vec[0], shape_param, 1, 0));
     ret_val = - rcpp_F_gengamma(upper_bound, scale_vec[1], scale_vec[0], shape_param, 0, 1) + rcpp_F_gengamma(lower_bound, scale_vec[1], scale_vec[0], shape_param, 0, 1);
+ 
+  } else if (dist == 4) {
+
+    double rate_param = rate_param_vec[0];
+    ret_val = - R::plnorm(upper_bound, rate_param, shape_param, 0, 1) + R::plnorm(lower_bound, rate_param, shape_param, 0, 1);
 
   }
+
   return(ret_val);
 }
 
@@ -167,6 +173,7 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
 // 1 = Weibull
 // 2 = Piecewise exponential
 // 3 = Generalized gamma
+// 4 = lognormal
 double rcpp_l_hazard(double x, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints) {
   NumericVector scale_vec = exp(log_scale_vec);
   NumericVector rate_param_vec = 1/scale_vec;
@@ -197,7 +204,14 @@ double rcpp_l_hazard(double x, double log_shape, NumericVector log_scale_vec, in
     denominator = rcpp_F_gengamma(x, scale_vec[1], scale_vec[0], shape_param, 0, 1);
     ret_val = numerator - denominator;
 
+  } else if (dist == 4) {
+
+    numerator = R::dlnorm(x, rate_param_vec[0], shape_param, 1);
+    denominator = R::plnorm(x, rate_param_vec[0], shape_param, 0, 1);
+    ret_val = numerator - denominator;
+
   }
+
   return(ret_val);
 }
 
@@ -205,6 +219,8 @@ double rcpp_l_hazard(double x, double log_shape, NumericVector log_scale_vec, in
 // 0 = Exponential
 // 1 = Weibull
 // 2 = Piecewise exponential - the way this is implemented here will work the same as for Exponential since it will identify the appropriate period
+// 3 = Generalized gamma
+// 4 = lognormal
 double rcpp_l_pdf(double x, double log_shape, double log_scale, int dist) {
   double rate_param = 1/exp(log_scale);
   double shape_param = exp(log_shape);

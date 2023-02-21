@@ -65,6 +65,18 @@ optim_fn <- function(par, data, weights, shape_par_ids, dist, breakpoints,
                                   breakpoints = breakpoints,
                                   par_period_id = par_period_id) 
     ret <- -sum(a * weights)
+  } else if (dist == 4) {
+    pars_per_period <- length(par[-shape_par_ids]) / num_periods
+    par_period_id <- rep(1:num_periods, each = pars_per_period)
+    
+    a <- rcpp_loglik_multi(x_df = data, 
+                           num_periods = num_periods,
+                           log_shapes = par[shape_par_ids], 
+                           log_scales = par[-shape_par_ids], 
+                           dist = dist,
+                           breakpoints = breakpoints,
+                           par_period_id = par_period_id) 
+    ret <- -sum(a * weights)
   }
   return(ret)
 }
@@ -129,6 +141,17 @@ optim_fn_grad <- function(par, data, weights, shape_par_ids, dist,
                            dist = dist,
                            breakpoints = breakpoints,
                            par_period_id = par_period_id) * weights)
+  } else if (dist == 4) {
+    pars_per_period <- length(par[-shape_par_ids]) / num_periods
+    par_period_id <- rep(1:num_periods, each = pars_per_period)
+    
+    a <- sum(rcpp_loglik_multi(x_df = data, 
+                               num_periods = num_periods,
+                               log_shapes = par[shape_par_ids], 
+                               log_scales = par[-shape_par_ids], 
+                               dist = dist,
+                               breakpoints = breakpoints,
+                               par_period_id = par_period_id) * weights)
   }
   
   return(a)
