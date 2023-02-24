@@ -64,7 +64,8 @@ boundary of a time period in \code{df}}
 analytically. Analytical gradient is faster, but only available for Weibull and Exponential distributions
 at the moment.}
 
-\item{dist}{distribution. Currently supports "weibull", "exponential", "piecewise_exponential", "gengamma", "lognormal"}
+\item{dist}{distribution. Currently supports "weibull", "exponential",
+"piecewise_exponential", "gengamma", "lognormal", "gompertz"}
 
 \item{breakpoints}{if distribution is "piecewise_exponential", the breakpoints (in months) where
 the distribution should be divided}

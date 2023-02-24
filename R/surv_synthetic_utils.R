@@ -65,7 +65,8 @@ optim_fn <- function(par, data, weights, shape_par_ids, dist, breakpoints,
                                   breakpoints = breakpoints,
                                   par_period_id = par_period_id) 
     ret <- -sum(a * weights)
-  } else if (dist == 4) {
+    
+  } else if (dist == 4 | dist == 5) {
     pars_per_period <- length(par[-shape_par_ids]) / num_periods
     par_period_id <- rep(1:num_periods, each = pars_per_period)
     
@@ -77,7 +78,8 @@ optim_fn <- function(par, data, weights, shape_par_ids, dist, breakpoints,
                            breakpoints = breakpoints,
                            par_period_id = par_period_id) 
     ret <- -sum(a * weights)
-  }
+  } 
+  
   return(ret)
 }
 
@@ -141,7 +143,7 @@ optim_fn_grad <- function(par, data, weights, shape_par_ids, dist,
                            dist = dist,
                            breakpoints = breakpoints,
                            par_period_id = par_period_id) * weights)
-  } else if (dist == 4) {
+  } else if (dist == 4 | dist == 5) {
     pars_per_period <- length(par[-shape_par_ids]) / num_periods
     par_period_id <- rep(1:num_periods, each = pars_per_period)
     

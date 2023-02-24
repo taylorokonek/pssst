@@ -59,12 +59,62 @@ double rcpp_f_gengamma(double x, double alpha, double beta, double gamma, bool l
   return(ret_val);
 }
 
+// input shape = Q, location = omega, scale = sigma
+// [[Rcpp::export]]
+double rcpp_F_gompertz(double x, double rate, double shape, bool lower_tail, bool give_log) {
+
+  double a = shape;
+  double b = rate;
+  double ret_val;
+
+  ret_val = -(b/a) * (exp(a * x) - 1);
+  // ret_val = 1 - exp(-(b/a) * (exp(a * x) - 1));
+  // ret_val = 1 - exp(-eta * (exp(b * x - 1)));
+
+  if (lower_tail) {
+    if (give_log) {
+      ret_val = log1p(-exp(ret_val));
+    } else {
+      ret_val = -expm1(ret_val);
+    }
+  } else {
+    if (give_log) {
+      ret_val = ret_val;
+    }  else {
+      ret_val = exp(ret_val);
+    }
+  }
+
+  return(ret_val);
+}
+
+// input shape = Q, location = omega, scale = sigma
+// [[Rcpp::export]]
+double rcpp_f_gompertz(double x, double rate, double shape, bool give_log) {
+
+  double a = shape;
+  double b = rate;
+  double ret_val;
+  
+  ret_val = log(b) + a * x - (b/a) * (exp(a * x) - 1);
+  // ret_val = log(b) + log(eta) + eta + b * x - eta * exp(b * x);
+
+  if (give_log) {
+    ret_val = ret_val;
+  } else {
+    ret_val = exp(ret_val);
+  }
+
+  return(ret_val);
+}
+
 // distributions:
 // 0 = Exponential
 // 1 = Weibull
 // 2 = Piecewise Exponential
 // 3 = Generalized Gamma
 // 4 = lognormal
+// 5 = Gompertz
 // [[Rcpp::export]]
 double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints) {
   NumericVector scale_vec = exp(log_scale_vec);
@@ -163,6 +213,9 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
     double rate_param = rate_param_vec[0];
     ret_val = - R::plnorm(upper_bound, rate_param, shape_param, 0, 1) + R::plnorm(lower_bound, rate_param, shape_param, 0, 1);
 
+  } else if (dist == 5) {
+    double rate_param = rate_param_vec[0];
+    ret_val = - rcpp_F_gompertz(upper_bound, rate_param, shape_param, 0, 1) + rcpp_F_gompertz(lower_bound, rate_param, shape_param, 0, 1);
   }
 
   return(ret_val);
@@ -174,6 +227,7 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
 // 2 = Piecewise exponential
 // 3 = Generalized gamma
 // 4 = lognormal
+// 5 = Gompertz
 double rcpp_l_hazard(double x, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints) {
   NumericVector scale_vec = exp(log_scale_vec);
   NumericVector rate_param_vec = 1/scale_vec;
@@ -210,6 +264,10 @@ double rcpp_l_hazard(double x, double log_shape, NumericVector log_scale_vec, in
     denominator = R::plnorm(x, rate_param_vec[0], shape_param, 0, 1);
     ret_val = numerator - denominator;
 
+  } else if (dist == 5) {
+    numerator = rcpp_f_gompertz(x, rate_param_vec[0], shape_param, 1);
+    denominator = rcpp_F_gompertz(x, rate_param_vec[0], shape_param, 0, 1);
+    ret_val = numerator - denominator;
   }
 
   return(ret_val);
@@ -221,6 +279,7 @@ double rcpp_l_hazard(double x, double log_shape, NumericVector log_scale_vec, in
 // 2 = Piecewise exponential - the way this is implemented here will work the same as for Exponential since it will identify the appropriate period
 // 3 = Generalized gamma
 // 4 = lognormal
+// 5 = Gompertz
 double rcpp_l_pdf(double x, double log_shape, double log_scale, int dist) {
   double rate_param = 1/exp(log_scale);
   double shape_param = exp(log_shape);

@@ -30,6 +30,7 @@ using namespace Rcpp;
 // 2 = Piecewise Exponential
 // 3 = Generalized gamma
 // 4 = lognormal
+// 5 = Gompertz
 //
 // breakpoints: vector of breakpoints for piecewise exponential distribution (not used for other distributions)
 // par_period_id: integer vector of length j = 1, ..., J containing ids for which period log_scales[j] belongs to (values 1:P, possibly repeated)

@@ -40,7 +40,8 @@
 #' @param numerical_grad boolean for whether gradient should be calculated numerically or
 #' analytically. Analytical gradient is faster, but only available for Weibull and Exponential distributions
 #' at the moment.
-#' @param dist distribution. Currently supports "weibull", "exponential", "piecewise_exponential", "gengamma", "lognormal"
+#' @param dist distribution. Currently supports "weibull", "exponential", 
+#' "piecewise_exponential", "gengamma", "lognormal", "gompertz"
 #' @param breakpoints if distribution is "piecewise_exponential", the breakpoints (in months) where
 #' the distribution should be divided
 #' @return A list containing: 
@@ -86,7 +87,8 @@ surv_synthetic <- function(df,
   # error checking
   
   # distribution errors
-  if (!(dist %in% c("weibull", "exponential", "piecewise_exponential", "gengamma", "lognormal"))) {
+  if (!(dist %in% c("weibull", "exponential", "piecewise_exponential", 
+                    "gengamma", "lognormal", "gompertz"))) {
     stop("distribution not currently supported in surv_synthetic")
   }
   if (only_scale & (dist != "weibull")) {
@@ -119,8 +121,10 @@ surv_synthetic <- function(df,
     dist <- 2
   } else if (dist == "gengamma") {
     dist <- 3
+  } else if (dist == "lognormal") {
+    dist <- 4 
   } else {
-    dist <- 4 # lognormal
+    dist <- 5 # gompertz
   }
   
   # make new df with appropriate columns
@@ -355,6 +359,37 @@ surv_synthetic <- function(df,
                                           breakpoints = breakpoints,
                                           num_periods = n_periods)
       }
+      
+      # gompertz
+    } else if (dist == 5) {
+      message("fitting model")
+      start_time <- Sys.time()
+      optim_res <- optim(par = c(rep(-1, n_periods ), rep(15, n_periods)),
+                         fn = optim_fn,
+                         data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
+                         weights = df$weights,
+                         shape_par_ids = 1:n_periods,
+                         dist = dist,
+                         breakpoints = breakpoints,
+                         num_periods = n_periods,
+                         method = "BFGS",
+                         hessian = TRUE)
+      end_time <- Sys.time()
+      end_time - start_time
+      
+      message("computing finite population variance")
+      
+      test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
+      for (i in 1:nrow(df)) {
+        test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
+                                          x = optim_res$par, 
+                                          data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
+                                          weights = 1,
+                                          shape_par_ids = 1:n_periods,
+                                          dist = dist,
+                                          breakpoints = breakpoints,
+                                          num_periods = n_periods)
+      }
     }
     
   }
@@ -435,6 +470,7 @@ surv_synthetic <- function(df,
         ret_df$U5MR[i] <- p_piecewise_exponential(60, log_scales = unlist(ret_df[i,c(2:(length(breakpoints) + 2))]), breakpoints = breakpoints)
       }
       
+      # generalized gamma
     } else if (dist == 3) {
       ret_df <- data.frame(period = 1:n_periods,
                            log_sigma_mean = est[1:n_periods])
@@ -451,6 +487,7 @@ surv_synthetic <- function(df,
         ret_df$U5MR[i] <- rcpp_F_gengamma(60, exp(ret_df$log_Q_mean)[i], exp(ret_df$log_mu_mean)[i], exp(ret_df$log_sigma_mean)[i], 1, 0)
       }
     
+      # lognormal
     } else if (dist == 4) {
       ret_df <- data.frame(period = 1:n_periods,
                            log_sigma_mean = est[1:n_periods],
@@ -460,6 +497,21 @@ surv_synthetic <- function(df,
       
       # add u5mr, nmr, imr to ret_df
       ret_df$U5MR <- 1 - plnorm(60, meanlog = exp(ret_df$log_mu_mean), sdlog = exp(ret_df$log_sigma_mean))
+    
+      # gompertz
+    } else if (dist == 5) {
+      ret_df <- data.frame(period = 1:n_periods,
+                           log_shape_mean = est[1:n_periods],
+                           log_scale_mean = est[(n_periods + 1):(n_periods*2)],
+                           log_shape_var = diag(vmat)[1:n_periods],
+                           log_scale_var = diag(vmat)[(n_periods + 1):(n_periods*2)])
+      
+      # add u5mr, nmr, imr to ret_df
+      ret_df$U5MR <- NA
+      for (i in 1:nrow(ret_df)) {
+        ret_df$U5MR[i] <- rcpp_F_gompertz(60, rate = 1/exp(ret_df$log_scale_mean[i]), shape = exp(ret_df$log_shape_mean[i]), 1, 0)
+      }
+      
     }
     
   }

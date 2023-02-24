@@ -19,6 +19,7 @@ The package currently supports the following parametric distributions:
 * Piecewise Exponential
 * Generalized Gamma
 * Lognormal
+* Gompertz
 
 ## Installation
 
