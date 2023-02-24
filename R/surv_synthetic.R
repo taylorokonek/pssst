@@ -491,12 +491,13 @@ surv_synthetic <- function(df,
     } else if (dist == 4) {
       ret_df <- data.frame(period = 1:n_periods,
                            log_sigma_mean = est[1:n_periods],
-                           log_mu_mean = est[(n_periods + 1):(n_periods*2)],
+                           log_1overmu_mean = est[(n_periods + 1):(n_periods*2)],
+                           mu_mean = 1/exp(est[(n_periods + 1):(n_periods*2)]),
                            log_sigma_var = diag(vmat)[1:n_periods],
-                           log_mu_var = diag(vmat)[(n_periods + 1):(n_periods*2)])
+                           log_1overmu_var = diag(vmat)[(n_periods + 1):(n_periods*2)])
       
       # add u5mr, nmr, imr to ret_df
-      ret_df$U5MR <- 1 - plnorm(60, meanlog = exp(ret_df$log_mu_mean), sdlog = exp(ret_df$log_sigma_mean))
+      ret_df$U5MR <- plnorm(60, meanlog = ret_df$mu_mean, sdlog = exp(ret_df$log_sigma_mean))
     
       # gompertz
     } else if (dist == 5) {
