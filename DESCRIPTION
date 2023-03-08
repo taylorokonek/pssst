@@ -23,8 +23,11 @@ Imports:
     dplyr,
     survey,
     numDeriv,
-    lubridate
+    lubridate,
+    RcppNumerical
 LinkingTo: 
     Rcpp,
+    RcppEigen,
+    RcppNumerical,
     BH
 VignetteBuilder: knitr

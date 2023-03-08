@@ -4,6 +4,7 @@
 #include <string.h>
 #include <Rmath.h>
 #include <boost/math/special_functions/gamma.hpp>
+#include <RcppNumerical.h>
 // #include <RcppArmadilloExtensions/sample.h>
 using namespace Rcpp;
 
@@ -59,7 +60,6 @@ double rcpp_f_gengamma(double x, double alpha, double beta, double gamma, bool l
   return(ret_val);
 }
 
-// input shape = Q, location = omega, scale = sigma
 // [[Rcpp::export]]
 double rcpp_F_gompertz(double x, double rate, double shape, bool lower_tail, bool give_log) {
 
@@ -108,6 +108,23 @@ double rcpp_f_gompertz(double x, double rate, double shape, bool give_log) {
   return(ret_val);
 }
 
+// Exponentially-truncated shifted-power family of hazards
+class etsp_haz: public Numer::Func
+{
+private:
+    double a;
+    double b;
+    double c;
+    double p;
+public:
+    etsp_haz(double a_, double b_, double c_, double p_) : a(a_), b(b_), c(c_), p(p_) {}
+
+    double operator()(const double& x) const
+    {
+        return a * pow(x + c, -p) * exp(-b * x);
+    }
+};
+
 // distributions:
 // 0 = Exponential
 // 1 = Weibull
@@ -115,6 +132,7 @@ double rcpp_f_gompertz(double x, double rate, double shape, bool give_log) {
 // 3 = Generalized Gamma
 // 4 = lognormal
 // 5 = Gompertz
+// 6 = ETSP: Exponentially-trunacted shifted-power
 // [[Rcpp::export]]
 double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints) {
   NumericVector scale_vec = exp(log_scale_vec);
@@ -216,7 +234,19 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
   } else if (dist == 5) {
     double rate_param = rate_param_vec[0];
     ret_val = - rcpp_F_gompertz(upper_bound, rate_param, shape_param, 0, 1) + rcpp_F_gompertz(lower_bound, rate_param, shape_param, 0, 1);
-  }
+
+  } else if (dist == 6) {}
+
+  // a = shape_param
+  // b = scale_vec[0]
+  // c = 0
+  // p = scale_vec[1]
+
+  etsp_haz f(shape_param, scale_vec[0], 0, scale_vec[1]);
+  double err_est;
+  int err_code;
+
+  ret_val += Numer::integrate(f, lower_bound, upper_bound, err_est, err_code);
 
   return(ret_val);
 }
@@ -268,6 +298,14 @@ double rcpp_l_hazard(double x, double log_shape, NumericVector log_scale_vec, in
     numerator = rcpp_f_gompertz(x, rate_param_vec[0], shape_param, 1);
     denominator = rcpp_F_gompertz(x, rate_param_vec[0], shape_param, 0, 1);
     ret_val = numerator - denominator;
+
+  } else if (dist == 6) {
+    double a = shape_param;
+    double b = scale_vec[0];
+    double c = 0;
+    double p = scale_vec[1];
+
+    ret_val = log(a) - p * log(x + c) - b * x;
   }
 
   return(ret_val);

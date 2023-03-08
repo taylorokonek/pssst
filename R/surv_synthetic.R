@@ -18,6 +18,12 @@
 #' 
 #' \deqn{f(x \mid \mu, \sigma, Q) = \frac{|Q| (Q^{-2}^{Q^{-2}})}{\sigma x \Gamma(Q^{-2})} \exp(Q^{-2}(Q \omega - \exp(Q \omega)))}
 #' 
+#' The "etsp" distribution uses the exponentially-trunacted shifted power family of hazards defined by
+#' 
+#' \deqn{h(x) = a(x + c)^{-p} e^{-b x}},
+#' 
+#' in Scholey (2019).
+#' 
 #' @param df a dataframe containing the output from \code{format_dhs}, or optionally, dataframe
 #' containing the following columns
 #' @param individual column corresponding to individual ID in \code{df}
@@ -41,7 +47,7 @@
 #' analytically. Analytical gradient is faster, but only available for Weibull and Exponential distributions
 #' at the moment.
 #' @param dist distribution. Currently supports "weibull", "exponential", 
-#' "piecewise_exponential", "gengamma", "lognormal", "gompertz"
+#' "piecewise_exponential", "gengamma", "lognormal", "gompertz", "etsp" (exponentially-truncated shifted power family)
 #' @param breakpoints if distribution is "piecewise_exponential", the breakpoints (in months) where
 #' the distribution should be divided
 #' @return A list containing: 
@@ -62,6 +68,10 @@
 ##' 
 ##' Prentice, R. L. (1974). A log gamma model and its maximum likelihood
 ##' estimation. Biometrika 61(3):539-544.
+##' 
+##' Scholey, J (2019). The Age-Trajectory of Infant Mortality in the United States: 
+##' Parametric Models and Generative Mechanisms. Annual meeting of the Population 
+##' Association of America, Austin, TX. 2019.
 ##' 
 #' @export surv_synthetic
 
@@ -88,7 +98,7 @@ surv_synthetic <- function(df,
   
   # distribution errors
   if (!(dist %in% c("weibull", "exponential", "piecewise_exponential", 
-                    "gengamma", "lognormal", "gompertz"))) {
+                    "gengamma", "lognormal", "gompertz","etsp"))) {
     stop("distribution not currently supported in surv_synthetic")
   }
   if (only_scale & (dist != "weibull")) {
@@ -123,8 +133,10 @@ surv_synthetic <- function(df,
     dist <- 3
   } else if (dist == "lognormal") {
     dist <- 4 
+  } else if (dist == "gompertz") {
+    dist <- 5 
   } else {
-    dist <- 5 # gompertz
+    dist <- 6 # etsp: exponentially-trunacted shifted power 
   }
   
   # make new df with appropriate columns
@@ -390,8 +402,44 @@ surv_synthetic <- function(df,
                                           breakpoints = breakpoints,
                                           num_periods = n_periods)
       }
+      
+      # etsp
+    } else if (dist == 6) {
+      message("fitting model")
+      start_time <- Sys.time()
+      optim_res <- optim(#par = c(-3.4105411  ,-3.7164873,  -4.0603739,  -4.0583122,  -4.1296221 , -4.1218318 , -4.8304898,
+                                 # -4.6563219 ,-50.7170878, -54.6150300 , -0.4096812, -15.0708202 ,-50.8088433 , -0.4216256,
+                                 # -18.6695283 ,-92.6074224 , -0.5180167, -14.8423170 ,-76.8183208 , -0.4751140, -13.6765386,
+                                 # -63.5170021,  -0.4674626 ,-17.9135479 , -6.0255137 , -0.4129632 , -2.9074320, -82.5893234,
+                                 # -17.6632405 ,-13.8152242 ,-24.4118199 , -0.6115352),
+                         par = c(rep(-4, n_periods), rep(-4, n_periods * 2)),
+                         fn = optim_fn,
+                         data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
+                         weights = df$weights,
+                         shape_par_ids = 1:n_periods,
+                         dist = dist,
+                         breakpoints = breakpoints,
+                         num_periods = n_periods,
+                         method = "BFGS",
+                         hessian = TRUE)
+      end_time <- Sys.time()
+      end_time - start_time
+      
+      message("computing finite population variance")
+      
+      test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
+      for (i in 1:nrow(df)) {
+        test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
+                                          x = optim_res$par, 
+                                          data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
+                                          weights = 1,
+                                          shape_par_ids = 1:n_periods,
+                                          dist = dist,
+                                          breakpoints = breakpoints,
+                                          num_periods = n_periods)
     }
     
+    }
   }
   
   # get finite pop variances

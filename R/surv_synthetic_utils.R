@@ -66,7 +66,7 @@ optim_fn <- function(par, data, weights, shape_par_ids, dist, breakpoints,
                                   par_period_id = par_period_id) 
     ret <- -sum(a * weights)
     
-  } else if (dist == 4 | dist == 5) {
+  } else if (dist == 4 | dist == 5 | dist == 6) {
     pars_per_period <- length(par[-shape_par_ids]) / num_periods
     par_period_id <- rep(1:num_periods, each = pars_per_period)
     
@@ -78,8 +78,8 @@ optim_fn <- function(par, data, weights, shape_par_ids, dist, breakpoints,
                            breakpoints = breakpoints,
                            par_period_id = par_period_id) 
     ret <- -sum(a * weights)
+    
   } 
-  
   return(ret)
 }
 
@@ -143,7 +143,7 @@ optim_fn_grad <- function(par, data, weights, shape_par_ids, dist,
                            dist = dist,
                            breakpoints = breakpoints,
                            par_period_id = par_period_id) * weights)
-  } else if (dist == 4 | dist == 5) {
+  } else if (dist == 4 | dist == 5 | dist == 6) {
     pars_per_period <- length(par[-shape_par_ids]) / num_periods
     par_period_id <- rep(1:num_periods, each = pars_per_period)
     
@@ -302,7 +302,6 @@ p_exponential_deltamethod <- function(x, par, vmat) {
 #' @noRd
 #' @keywords internal
 p_piecewise_exponential_deltamethod <- function(x, par, vmat) {
-  
   grad <- diag(length(par)) * d_p_exponential_log_scale(x, par)
   delta_vmat <- t(grad) %*% vmat %*% grad
   return(delta_vmat)
@@ -310,7 +309,47 @@ p_piecewise_exponential_deltamethod <- function(x, par, vmat) {
 
 
 
-D(expression(1 - exp(-beta_1 * x_3 - beta_2 * x_2 - beta_1 * x_1)), "x_1")
+#' h(x) for ETSP
+#' 
+#' @param x value
+#' @param a parameter
+#' @param b parameter
+#' @param c parameter
+#' @param p parameter
+#' @return hazard for ETSP
+#' 
+#' @author Taylor Okonek
+#' @noRd
+#' @keywords internal
+h_etsp <- function (x, a, b, c, p) {
+  a * (x + c)^(-p) * exp(-b * x)
+}
+
+
+
+#' H(x) for ETSP
+#' 
+#' @param x value
+#' @param lower lower val for integral of hazard
+#' @param upper upper val for integral of hazard
+#' @param a upper val for integral of hazard
+#' @param b upper val for integral of hazard
+#' @param c upper val for integral of hazard
+#' @param p upper val for integral of hazard
+#' @return cumulative hazard for ETSP family of hazards between lower and upper 
+#' 
+#' @author Taylor Okonek
+#' @noRd
+#' @keywords internal
+H_etsp <- function(lower, upper, a, b, c, p) {
+  ret <- integrate(h_etsp, lower, upper, a = a, b = b, c = c, p = p)
+  return(ret$value)
+}
+H_etsp <- Vectorize(H_etsp)
+
+
+
+
 
 
 
