@@ -65,7 +65,7 @@ analytically. Analytical gradient is faster, but only available for Weibull and 
 at the moment.}
 
 \item{dist}{distribution. Currently supports "weibull", "exponential",
-"piecewise_exponential", "gengamma", "lognormal", "gompertz"}
+"piecewise_exponential", "gengamma", "lognormal", "gompertz", "etsp" (exponentially-truncated shifted power family)}
 
 \item{breakpoints}{if distribution is "piecewise_exponential", the breakpoints (in months) where
 the distribution should be divided}
@@ -101,6 +101,12 @@ as it is more numerically stable in some cases. Under this alternative, if
 follows the generalized gamma distribution with pdf
 
 \deqn{f(x \mid \mu, \sigma, Q) = \frac{|Q| (Q^{-2}^{Q^{-2}})}{\sigma x \Gamma(Q^{-2})} \exp(Q^{-2}(Q \omega - \exp(Q \omega)))}
+
+The "etsp" distribution uses the exponentially-trunacted shifted power family of hazards defined by
+
+\deqn{h(x) = a(x + c)^{-p} e^{-b x}},
+
+in Scholey (2019), but sets \eqn{c = 0}.
 }
 \references{
 Stacy, E. W. (1962). A generalization of the gamma
@@ -108,6 +114,10 @@ distribution.  Annals of Mathematical Statistics 33:1187-92.
 
 Prentice, R. L. (1974). A log gamma model and its maximum likelihood
 estimation. Biometrika 61(3):539-544.
+
+Scholey, J (2019). The Age-Trajectory of Infant Mortality in the United States:
+Parametric Models and Generative Mechanisms. Annual meeting of the Population
+Association of America, Austin, TX. 2019.
 }
 \author{
 Taylor Okonek

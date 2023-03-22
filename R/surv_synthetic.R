@@ -22,7 +22,7 @@
 #' 
 #' \deqn{h(x) = a(x + c)^{-p} e^{-b x}},
 #' 
-#' in Scholey (2019).
+#' in Scholey (2019), but sets \eqn{c = 0}.
 #' 
 #' @param df a dataframe containing the output from \code{format_dhs}, or optionally, dataframe
 #' containing the following columns
@@ -559,6 +559,28 @@ surv_synthetic <- function(df,
       ret_df$U5MR <- NA
       for (i in 1:nrow(ret_df)) {
         ret_df$U5MR[i] <- rcpp_F_gompertz(60, rate = 1/exp(ret_df$log_scale_mean[i]), shape = exp(ret_df$log_shape_mean[i]), 1, 0)
+      }
+      
+      # etsp
+    } else if (dist == 6) {
+      temp_mat <- est[(n_periods + 1):length(est)] %>% matrix(ncol = 2, byrow = TRUE)
+      temp_vmat <- diag(vmat)[(n_periods + 1):length(est)] %>% matrix(ncol = 2, byrow = TRUE)
+      
+      ret_df <- data.frame(period = 1:n_periods,
+                           log_a_mean = est[1:n_periods],
+                           log_b_mean = temp_mat[,1],
+                           log_p_mean = temp_mat[,2],
+                           log_a_var = diag(vmat)[1:n_periods],
+                           log_b_var = temp_vmat[,1],
+                           log_p_var = temp_vmat[,2])
+      
+      # add u5mr, nmr, imr to ret_df
+      ret_df$U5MR <- NA
+      for (i in 1:nrow(ret_df)) {
+        ret_df$U5MR[i] <- 1 - exp(-H_etsp(0, 60, a = exp(ret_df$log_a_mean[i]), 
+                                 b = exp(ret_df$log_b_mean[i]), 
+                                 c = 0,
+                                 p = exp(ret_df$log_p_mean[i])))
       }
       
     }
