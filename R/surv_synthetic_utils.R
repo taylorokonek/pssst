@@ -18,13 +18,15 @@ optim_fn <- function(par, data, weights, shape_par_ids, dist, breakpoints,
     pars_per_period <- length(par[-shape_par_ids]) / num_periods
     par_period_id <- rep(1:num_periods, each = pars_per_period)
     
-    ret <- -sum(rcpp_loglik_multi(x_df = data, 
-                                  num_periods = num_periods,
-                                  log_shapes = par[shape_par_ids], 
-                                  log_scales = par[-shape_par_ids], 
-                                  dist = dist,
-                                  breakpoints = breakpoints,
-                                  par_period_id = par_period_id) * weights)
+    a <- rcpp_loglik_multi(x_df = data, 
+                           num_periods = num_periods,
+                           log_shapes = par[shape_par_ids], 
+                           log_scales = par[-shape_par_ids], 
+                           dist = dist,
+                           breakpoints = breakpoints,
+                           par_period_id = par_period_id)
+    
+    ret <- -sum(a * weights)
     
     # exponential, piecewise exponential
   } else if (dist == 0) {

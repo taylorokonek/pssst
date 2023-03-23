@@ -235,7 +235,7 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
     double rate_param = rate_param_vec[0];
     ret_val = - rcpp_F_gompertz(upper_bound, rate_param, shape_param, 0, 1) + rcpp_F_gompertz(lower_bound, rate_param, shape_param, 0, 1);
 
-  } else if (dist == 6) {}
+  } else if (dist == 6) {
 
   // a = shape_param
   // b = scale_vec[0]
@@ -247,6 +247,7 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
   int err_code;
 
   ret_val += Numer::integrate(f, lower_bound, upper_bound, err_est, err_code);
+}
 
   return(ret_val);
 }

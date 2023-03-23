@@ -155,7 +155,7 @@ NumericVector rcpp_loglik_multi(DataFrame x_df, int num_periods, NumericVector l
           H_i1 += rcpp_hazard_integral(std::max(a_pi[j], 0.0), std::min(x(i, 4), a_pi[j] + l_p[j]), log_shape_internal[j], which_vals, dist, breakpoints);
         }
       }
-      
+
       ret_vec[i] = log(exp(-H_i0) - exp(-H_i1));
 
       // if observed exactly...

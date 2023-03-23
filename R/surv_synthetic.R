@@ -118,7 +118,7 @@ surv_synthetic <- function(df,
   }
   
   # remove 0 and Inf from breakpoints, if needed, and sort
-  if (!is.na(breakpoints)) {
+  if (!is.na(breakpoints[1])) {
     breakpoints <- sort(breakpoints[!(breakpoints %in% c(0, Inf))])
   }
   
@@ -207,7 +207,8 @@ surv_synthetic <- function(df,
     if (dist == 1) {
       message("fitting model")
       start_time <- Sys.time()
-      optim_res <- optim(par = c(rep(-1,n_periods), rep(15, n_periods)),
+      optim_res <- optim(#par = c(rep(-1,n_periods), rep(15, n_periods)),
+                         par = c(-0.999, -1, 15, 15),
                          fn = optim_fn,
                          data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
                          weights = df$weights,
@@ -228,7 +229,7 @@ surv_synthetic <- function(df,
                                             x = optim_res$par, 
                                             data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
                                             weights = 1,
-                                            shape_par_ids = 1:nperiods,
+                                            shape_par_ids = 1:n_periods,
                                             dist = dist,
                                             breakpoints = breakpoints,
                                             num_periods = n_periods)

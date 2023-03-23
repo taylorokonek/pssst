@@ -65,11 +65,10 @@ format_dhs <- function(df,
   
   # remove individuals who died before min(year_cut)
   num_before <- length(which(births$year_died < min(year_cut)))
-  
   if(num_before > 0) {
     message(paste0("Removing ", num_before, " children who died before ", min(year_cut)))
   }
-  births <- births %>% filter(year_died >= min(year_cut))
+  births <- births[which(is.na(births$year_died) | (births$year_died >= min(year_cut))),]
   
   # remove individuals born after max_year
   num_after <- length(which(births$year_born >= max_year))
@@ -77,6 +76,23 @@ format_dhs <- function(df,
     message(paste0("Removing ", num_after, " children born after ", max_year))
   }
   births <- births %>% filter(year_born < max_year)
+  
+  # if they died after max_year, right censor them at their age at max year
+  died_dates <- suppressWarnings((paste(births$year_died, births$month_died, sep = "-") %>% ym()))
+  max_date <- ym(paste0(max_year,"-01"))
+  died_after_max <- which((!is.na(died_dates)) & (died_dates >= max_date))
+  
+  new_rightcensoringage <- floor(-((ym(paste(births$year_born, births$month_born, sep = "-")) - 
+                              ym(paste0(max_year,"-01")))[died_after_max]) / 30)
+  
+  row_ids <- died_after_max
+  # instead make them right censored
+  births[row_ids,]$right_censored <- TRUE
+  births[row_ids,]$interval_censored <- FALSE
+  births[row_ids,]$died <- FALSE
+  births[row_ids,]$age_at_censoring <- new_rightcensoringage
+  births[row_ids,]$t0 <- 0
+  births[row_ids,]$t1 <- Inf
   
   # if a right_censor_time is specified, do that
   if (!is.na(right_censor_time)) {
