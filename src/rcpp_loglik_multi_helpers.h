@@ -47,17 +47,13 @@ double rcpp_f_gengamma(double x, double alpha, double beta, double gamma, bool l
   double Q = alpha;
   double mu = beta;
   double sigma = gamma;
-  double omega = -(mu - log(x)) / sigma;
 
-  // get log pdf
-  double lpdf = log(abs(Q)) + pow(Q, -2) * log(pow(Q, -2)) - log(sigma) - log(x) - lgamma(pow(Q, -2)) + pow(Q, -2) * (Q * omega - exp(Q * omega));
-  double ret_val;
-  if (log_pdf) {
-    ret_val = lpdf;
-  } else {
-    ret_val = exp(lpdf);
-  }
-  return(ret_val);
+  Environment pkg = Environment::namespace_env("flexsurv");
+  Function f = pkg["dgengamma"];
+  SEXP temp = f(x, Named("mu") = mu, Named("Q") = Q, Named("sigma") = sigma, Named("log") = log_pdf);
+
+  return Rcpp::as<double>(temp);
+
 }
 
 // [[Rcpp::export]]
