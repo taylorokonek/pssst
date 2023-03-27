@@ -70,6 +70,26 @@ format_dhs <- function(df,
   }
   births <- births[which(is.na(births$year_died) | (births$year_died >= min(year_cut))),]
   
+  # remove individuals who are right-censored before min(year_cut)
+  birth_dates <- suppressWarnings((paste(births$year_born, births$month_born, sep = "-") %>% ym()))
+  right_censored_dates <- birth_dates %m+% months(births$age_at_censoring)
+  censored_before <- which(right_censored_dates < ym(paste0(min(year_cut), "-01")))
+  if (length(censored_before) > 0) {
+    message(paste0("Removing ", length(censored_before), " children who were right censored before ", min(year_cut)))
+    births <- births[-censored_before,]
+  }
+  
+  
+  # if right_censor_time specified and they reached this age before min(year), remove them
+  if (!is.na(right_censor_time)) {
+    right_censored_dates_new <- birth_dates %m+% months(right_censor_time)
+    censored_before_new <- which(right_censored_dates_new <= ym(paste0(min(year_cut), "-01")))
+    if (length(censored_before_new) > 0) {
+      message(paste0("Removing ", length(censored_before_new), " children who would be right censored at age ",right_censor_time," before ", min(year_cut)))
+      births <- births[-censored_before_new,]
+    }
+  }
+  
   # remove individuals born after max_year
   num_after <- length(which(births$year_born >= max_year))
   if (num_after > 0) {
@@ -97,32 +117,43 @@ format_dhs <- function(df,
   # if a right_censor_time is specified, do that
   if (!is.na(right_censor_time)) {
     # identify who dies after right_censor_time
-    row_ids <- which(births$died & (births$age_at_censoring > right_censor_time))
+    row_ids1 <- which(births$died & (births$age_at_censoring > right_censor_time))
     
-    if (length(row_ids) > 0) {
-      birth_dates <- paste(births[row_ids,]$year_born, 
-                           births[row_ids,]$month_born, sep = "-") %>% ym()
+    if (length(row_ids1) > 0) {
+      birth_dates <- paste(births[row_ids1,]$year_born, 
+                           births[row_ids1,]$month_born, sep = "-") %>% ym()
       right_cens_dates <- birth_dates %m+% months(right_censor_time)
       
       # identify who would be right censored before the first period
       rc_before_ids <- which(right_cens_dates < (paste(min(year_cut),"1",sep = "-") %>% ym() %m+% months(1)))
-      rc_before_ids_final <- row_ids[rc_before_ids]
+      rc_before_ids_final <- row_ids1[rc_before_ids]
       
       # instead make them right censored
-      births[row_ids,]$right_censored <- TRUE
-      births[row_ids,]$interval_censored <- FALSE
-      births[row_ids,]$died <- FALSE
-      births[row_ids,]$age_at_censoring <- right_censor_time
-      births[row_ids,]$t0 <- 0
-      births[row_ids,]$t1 <- Inf
+      births[row_ids1,]$right_censored <- TRUE
+      births[row_ids1,]$interval_censored <- FALSE
+      births[row_ids1,]$died <- FALSE
+      births[row_ids1,]$age_at_censoring <- right_censor_time
+      births[row_ids1,]$t0 <- 0
+      births[row_ids1,]$t1 <- Inf
     }
     
     # identify who is right censored later than right_censor_time
-    row_ids <- which(!births$died & (births$age_at_censoring > right_censor_time))
+    row_ids2 <- which(!births$died & (births$age_at_censoring > right_censor_time))
     
-    if (length(row_ids) > 0) {
-      births[row_ids,]$age_at_censoring <- right_censor_time
+    if (length(row_ids2) > 0) {
+      births[row_ids2,]$age_at_censoring <- right_censor_time
+      
+      birth_dates2 <- paste(births[row_ids2,]$year_born, 
+                            births[row_ids2,]$month_born, sep = "-") %>% ym()
+      right_cens_dates2 <- birth_dates2 %m+% months(right_censor_time)
+      
+      # identify who would be right censored before the first period
+      rc_before_ids2 <- which(right_cens_dates2 < (paste(min(year_cut),"1",sep = "-") %>% ym() %m+% months(1)))
+      rc_before_ids_final2 <- row_ids2[rc_before_ids2]
     }
+    
+    rc_before_ids_final <- unique(c(rc_before_ids_final, rc_before_ids_final2))
+    rc_before_ids_final <- rc_before_ids_final[!is.na(rc_before_ids_final)]
     
     # remove individuals who are right-censored before first time period based on cutoff
     if (length(rc_before_ids_final) > 0) {
@@ -131,7 +162,6 @@ format_dhs <- function(df,
     }
     
   }
-  
   
   # death with exact days of death
   # get rows where child's death is recorded in days

@@ -70,7 +70,6 @@ format_turnbull <- function(df) {
         # rbind
         ret_small <- rbind(ret_small, test_small)
       } else {
-        print(i)
         stop("function not built to handle yearly time periods yet, where individuals\ncan be alive through multiple time periods before being interval censored")
       }
     
