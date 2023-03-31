@@ -220,5 +220,33 @@ format_dhs <- function(df,
   # divide weights by constant because DHS
   births <- births %>% mutate(weights = weights/1e6)
   
+  # deal with people interval censored across last boundary
+  uniq_indivs <- unique(births$individual)
+  change_As <- c()
+  
+  for (i in 1:length(uniq_indivs)) {
+    temp <- births[which(births$individual == uniq_indivs[i]),]
+    
+    # if right-censored, make sure t_i <= max(a_pi + l_p)
+    if (temp$I_i[1] == 0) {
+      new_t_i <- min(temp$t_i[1],max(temp$a_pi + temp$l_p))
+      births[which(births$individual == uniq_indivs[i]),]$t_i <- new_t_i
+      
+    # if interval-censored or exactly observed, make sure 
+    } else {
+      new_t_1i <- min(temp$t_1i[1],max(temp$a_pi + temp$l_p))
+      new_t_0i <- max(temp$t_0i[1], min(temp$a_pi))
+      
+      if ((new_t_1i != temp$t_1i[1]) | (new_t_0i != temp$t_0i[1])) {
+        change_As <- c(change_As, which(births$individual == uniq_indivs[i]))
+      }
+      
+      births[which(births$individual == uniq_indivs[i]),]$t_1i <- new_t_1i
+      births[which(births$individual == uniq_indivs[i]),]$t_0i <- new_t_0i
+    }
+  }
+  
+  births[change_As,]$A_i <- 0
+  
   return(births)
 }

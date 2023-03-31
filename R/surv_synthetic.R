@@ -27,6 +27,11 @@
 #' @param df a dataframe containing the output from \code{format_dhs}, or optionally, dataframe
 #' containing the following columns
 #' @param individual column corresponding to individual ID in \code{df}
+#' @param survey boolean for whether or not your data comes from a survey with a specified probability design.
+#' If true, must specify household, cluster, strata, and weights parameters in the function, and a finite
+#' population variance based on a pseudo-likelihood will be returned for your survey-weighted estimates. 
+#' If false, superpopulation estimates will be returned with the usual asymptotic variance estimator.
+#' Defaults to \code{TRUE}.
 #' @param household column corresponding to household ID in \code{df}
 #' @param cluster column corresponding to cluster ID in \code{df}
 #' @param strata column corresponding to strata ID in \code{df}
@@ -77,6 +82,7 @@
 
 surv_synthetic <- function(df,
                            individual = "individual",
+                           survey = TRUE,
                            household = "household",
                            cluster = "cluster",
                            strata = "strata",
@@ -95,6 +101,9 @@ surv_synthetic <- function(df,
                            breakpoints = NA) {
   
   # error checking
+  if (survey & any(is.na(household, cluster, strata, weights))) {
+    stop("If survey == true, must specify household, cluster, strata, and weights columns")
+  }
   
   # distribution errors
   if (!(dist %in% c("weibull", "exponential", "piecewise_exponential", 
@@ -163,6 +172,11 @@ surv_synthetic <- function(df,
   a_pi_cols <- paste0("a_pi_",1:n_periods)
   l_p_cols <- paste0("l_p_",1:n_periods)
   
+  # if no survey design, set weights = 1 for all individuals
+  if (!survey) {
+    df$weights <- 1
+  }
+  
   # fit model
   if (only_scale) {
     message("fitting model")
@@ -181,24 +195,26 @@ surv_synthetic <- function(df,
     end_time <- Sys.time()
     end_time - start_time
     
-    message("computing finite population variance")
-    if (numerical_grad) {
-      test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
-      for (i in 1:nrow(df)) {
-        test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
-                                          x = optim_res$par, 
-                                          data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
-                                          weights = 1,
-                                          shape_par_ids = 1,
-                                          dist = dist,
-                                          breakpoints = breakpoints,
-                                          num_periods = n_periods)
+    if (survey) {
+      message("computing finite population variance")
+      if (numerical_grad) {
+        test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
+        for (i in 1:nrow(df)) {
+          test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
+                                            x = optim_res$par, 
+                                            data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
+                                            weights = 1,
+                                            shape_par_ids = 1,
+                                            dist = dist,
+                                            breakpoints = breakpoints,
+                                            num_periods = n_periods)
+        }
+      } else {
+        test_scores <- rcpp_gradient_multi(x_df = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
+                                           log_shapes = optim_res$par[1], 
+                                           log_scales = optim_res$par[2:length(optim_res$par)], 
+                                           dist = dist)
       }
-    } else {
-      test_scores <- rcpp_gradient_multi(x_df = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
-                                         log_shapes = optim_res$par[1], 
-                                         log_scales = optim_res$par[2:length(optim_res$par)], 
-                                         dist = dist)
     }
     
   } else {
@@ -207,8 +223,7 @@ surv_synthetic <- function(df,
     if (dist == 1) {
       message("fitting model")
       start_time <- Sys.time()
-      optim_res <- optim(#par = c(rep(-1,n_periods), rep(15, n_periods)),
-                         par = c(-0.999, -1, 15, 15),
+      optim_res <- optim(par = c(rep(-1,n_periods), rep(15, n_periods)),
                          fn = optim_fn,
                          data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
                          weights = df$weights,
@@ -221,25 +236,28 @@ surv_synthetic <- function(df,
       end_time <- Sys.time()
       end_time - start_time
       
-      message("computing finite population variance")
-      if (numerical_grad) {
-        test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
-        for (i in 1:nrow(df)) {
-          test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
-                                            x = optim_res$par, 
-                                            data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
-                                            weights = 1,
-                                            shape_par_ids = 1:n_periods,
-                                            dist = dist,
-                                            breakpoints = breakpoints,
-                                            num_periods = n_periods)
+      if (survey) {
+        message("computing finite population variance")
+        if (numerical_grad) {
+          test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
+          for (i in 1:nrow(df)) {
+            test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
+                                              x = optim_res$par, 
+                                              data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
+                                              weights = 1,
+                                              shape_par_ids = 1:n_periods,
+                                              dist = dist,
+                                              breakpoints = breakpoints,
+                                              num_periods = n_periods)
+          }
+        } else {
+          test_scores <- rcpp_gradient_multi(x_df = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
+                                             log_shapes = optim_res$par[1:n_periods], 
+                                             log_scales = optim_res$par[(n_periods + 1):(n_periods * 2)], 
+                                             dist = dist)
         }
-      } else {
-        test_scores <- rcpp_gradient_multi(x_df = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
-                                           log_shapes = optim_res$par[1:n_periods], 
-                                           log_scales = optim_res$par[(n_periods + 1):(n_periods * 2)], 
-                                           dist = dist)
       }
+      
       
       # exponential
     } else if (dist == 0) {
@@ -258,26 +276,28 @@ surv_synthetic <- function(df,
       end_time <- Sys.time()
       end_time - start_time
       
-      message("computing finite population variance")
-      if (numerical_grad) {
-        test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
-        for (i in 1:nrow(df)) {
-          test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
-                                            x = optim_res$par, 
-                                            data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
-                                            weights = 1,
-                                            shape_par_ids = NA,
-                                            dist = 1,
-                                            breakpoints = breakpoints,
-                                            num_periods = n_periods)
+      if (survey) {
+        message("computing finite population variance")
+        if (numerical_grad) {
+          test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
+          for (i in 1:nrow(df)) {
+            test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
+                                              x = optim_res$par, 
+                                              data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
+                                              weights = 1,
+                                              shape_par_ids = NA,
+                                              dist = 1,
+                                              breakpoints = breakpoints,
+                                              num_periods = n_periods)
+            test_scores <- test_scores[,-1]
+          }
+        } else {
+          test_scores <- rcpp_gradient_multi(x_df = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
+                                             log_shapes = 1, 
+                                             log_scales = optim_res$par, 
+                                             dist = 1)
           test_scores <- test_scores[,-1]
         }
-      } else {
-        test_scores <- rcpp_gradient_multi(x_df = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
-                                           log_shapes = 1, 
-                                           log_scales = optim_res$par, 
-                                           dist = 1)
-        test_scores <- test_scores[,-1]
       }
       
       # piecewise exponential
@@ -297,8 +317,9 @@ surv_synthetic <- function(df,
       end_time <- Sys.time()
       end_time - start_time
 
-      message("computing finite population variance")
-      
+      if (survey) {
+        message("computing finite population variance")
+        
         test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
         for (i in 1:nrow(df)) {
           test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
@@ -310,6 +331,7 @@ surv_synthetic <- function(df,
                                             breakpoints = breakpoints,
                                             num_periods = n_periods)
         }
+      }
       
       # generalized gamma
     } else if (dist == 3) {
@@ -328,18 +350,20 @@ surv_synthetic <- function(df,
       end_time <- Sys.time()
       end_time - start_time
       
-      message("computing finite population variance")
-      
-      test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
-      for (i in 1:nrow(df)) {
-        test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
-                                          x = optim_res$par, 
-                                          data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
-                                          weights = 1,
-                                          shape_par_ids = 1:n_periods,
-                                          dist = dist,
-                                          breakpoints = breakpoints,
-                                          num_periods = n_periods)
+      if (survey) {
+        message("computing finite population variance")
+        
+        test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
+        for (i in 1:nrow(df)) {
+          test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
+                                            x = optim_res$par, 
+                                            data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
+                                            weights = 1,
+                                            shape_par_ids = 1:n_periods,
+                                            dist = dist,
+                                            breakpoints = breakpoints,
+                                            num_periods = n_periods)
+        }
       }
       
       # lognormal
@@ -359,20 +383,22 @@ surv_synthetic <- function(df,
       end_time <- Sys.time()
       end_time - start_time
       
-      message("computing finite population variance")
-      
-      test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
-      for (i in 1:nrow(df)) {
-        test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
-                                          x = optim_res$par, 
-                                          data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
-                                          weights = 1,
-                                          shape_par_ids = 1:n_periods,
-                                          dist = dist,
-                                          breakpoints = breakpoints,
-                                          num_periods = n_periods)
+      if (survey) {
+        message("computing finite population variance")
+        
+        test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
+        for (i in 1:nrow(df)) {
+          test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
+                                            x = optim_res$par, 
+                                            data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
+                                            weights = 1,
+                                            shape_par_ids = 1:n_periods,
+                                            dist = dist,
+                                            breakpoints = breakpoints,
+                                            num_periods = n_periods)
+        }
       }
-      
+     
       # gompertz
     } else if (dist == 5) {
       message("fitting model")
@@ -390,30 +416,27 @@ surv_synthetic <- function(df,
       end_time <- Sys.time()
       end_time - start_time
       
-      message("computing finite population variance")
-      
-      test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
-      for (i in 1:nrow(df)) {
-        test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
-                                          x = optim_res$par, 
-                                          data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
-                                          weights = 1,
-                                          shape_par_ids = 1:n_periods,
-                                          dist = dist,
-                                          breakpoints = breakpoints,
-                                          num_periods = n_periods)
-      }
+      if (survey) {
+        message("computing finite population variance")
+        
+        test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
+        for (i in 1:nrow(df)) {
+          test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
+                                            x = optim_res$par, 
+                                            data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
+                                            weights = 1,
+                                            shape_par_ids = 1:n_periods,
+                                            dist = dist,
+                                            breakpoints = breakpoints,
+                                            num_periods = n_periods)
+        }
+      } 
       
       # etsp
     } else if (dist == 6) {
       message("fitting model")
       start_time <- Sys.time()
-      optim_res <- optim(#par = c(-3.4105411  ,-3.7164873,  -4.0603739,  -4.0583122,  -4.1296221 , -4.1218318 , -4.8304898,
-                                 # -4.6563219 ,-50.7170878, -54.6150300 , -0.4096812, -15.0708202 ,-50.8088433 , -0.4216256,
-                                 # -18.6695283 ,-92.6074224 , -0.5180167, -14.8423170 ,-76.8183208 , -0.4751140, -13.6765386,
-                                 # -63.5170021,  -0.4674626 ,-17.9135479 , -6.0255137 , -0.4129632 , -2.9074320, -82.5893234,
-                                 # -17.6632405 ,-13.8152242 ,-24.4118199 , -0.6115352),
-                         par = c(rep(-4, n_periods), rep(-4, n_periods * 2)),
+      optim_res <- optim(par = c(rep(-4, n_periods), rep(-4, n_periods * 2)),
                          fn = optim_fn,
                          data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
                          weights = df$weights,
@@ -426,32 +449,38 @@ surv_synthetic <- function(df,
       end_time <- Sys.time()
       end_time - start_time
       
-      message("computing finite population variance")
-      
-      test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
-      for (i in 1:nrow(df)) {
-        test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
-                                          x = optim_res$par, 
-                                          data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
-                                          weights = 1,
-                                          shape_par_ids = 1:n_periods,
-                                          dist = dist,
-                                          breakpoints = breakpoints,
-                                          num_periods = n_periods)
-    }
-    
+      if (survey) {
+        message("computing finite population variance")
+        
+        test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
+        for (i in 1:nrow(df)) {
+          test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
+                                            x = optim_res$par, 
+                                            data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
+                                            weights = 1,
+                                            shape_par_ids = 1:n_periods,
+                                            dist = dist,
+                                            breakpoints = breakpoints,
+                                            num_periods = n_periods)
+        }
+      }
     }
   }
   
   # get finite pop variances
   est <- optim_res$par
-  test_invinf <- solve(-optim_res$hessian)
-  infl_fns <- test_scores %*% test_invinf
-  design <- survey::svydesign(ids=~cluster+household, 
-                              strata = ~strata,
-                              weights = ~weights, 
-                              data = df)
-  vmat <- vcov(svytotal(infl_fns, design))
+  if (survey) {
+    test_invinf <- solve(-optim_res$hessian)
+    infl_fns <- test_scores %*% test_invinf
+    design <- survey::svydesign(ids=~cluster+household, 
+                                strata = ~strata,
+                                weights = ~weights, 
+                                data = df)
+    vmat <- vcov(svytotal(infl_fns, design))
+  } else {
+    message("computing superpopulation variance")
+    vmat <- solve(optim_res$hessian)
+  }
   
   # organize results to return
   if (only_scale) {
@@ -588,12 +617,20 @@ surv_synthetic <- function(df,
     
   }
   
-  ret_lst <- list(result = ret_df,
-                  optim = optim_res,
-                  grad = test_scores,
-                  variance = vmat,
-                  design = design,
-                  runtime = end_time - start_time)
+  if (survey) {
+    ret_lst <- list(result = ret_df,
+                    optim = optim_res,
+                    grad = test_scores,
+                    variance = vmat,
+                    design = design,
+                    runtime = end_time - start_time)
+  } else {
+    ret_lst <- list(result = ret_df,
+                    optim = optim_res,
+                    grad = test_scores,
+                    variance = vmat,
+                    runtime = end_time - start_time)
+  }
   
   return(ret_lst)
 }
