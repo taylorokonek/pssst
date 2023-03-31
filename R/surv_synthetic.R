@@ -35,7 +35,9 @@
 #' @param household column corresponding to household ID in \code{df}
 #' @param cluster column corresponding to cluster ID in \code{df}
 #' @param strata column corresponding to strata ID in \code{df}
-#' @param weights column corresponding to weights in \code{df}
+#' @param weights column corresponding to weights in \code{df}. If survey = FALSE, you may
+#' still specify a weights column, but note that the superpopulation variance will be returned
+#' as opposed to the finite population variance. 
 #' @param p column corresponding to period ID (numeric) in \code{df}
 #' @param a_pi column corresponding to child's age at beginning of time period in \code{df}
 #' @param l_p column corresponding to length of time period in \code{df}
@@ -83,10 +85,10 @@
 surv_synthetic <- function(df,
                            individual = "individual",
                            survey = TRUE,
-                           household = "household",
-                           cluster = "cluster",
-                           strata = "strata",
-                           weights = "weights",
+                           household = NULL,
+                           cluster = NULL,
+                           strata = NULL,
+                           weights = NULL,
                            p = "p",
                            a_pi = "a_pi",
                            l_p = "l_p",
@@ -172,8 +174,8 @@ surv_synthetic <- function(df,
   a_pi_cols <- paste0("a_pi_",1:n_periods)
   l_p_cols <- paste0("l_p_",1:n_periods)
   
-  # if no survey design, set weights = 1 for all individuals
-  if (!survey) {
+  # if no survey design and weights column unspecified, set weights = 1 for all individuals
+  if (!survey & is.na(weights)) {
     df$weights <- 1
   }
   

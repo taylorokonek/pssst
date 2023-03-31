@@ -7,10 +7,11 @@
 surv_synthetic(
   df,
   individual = "individual",
-  household = "household",
-  cluster = "cluster",
-  strata = "strata",
-  weights = "weights",
+  survey = TRUE,
+  household = NULL,
+  cluster = NULL,
+  strata = NULL,
+  weights = NULL,
   p = "p",
   a_pi = "a_pi",
   l_p = "l_p",
@@ -31,13 +32,21 @@ containing the following columns}
 
 \item{individual}{column corresponding to individual ID in \code{df}}
 
+\item{survey}{boolean for whether or not your data comes from a survey with a specified probability design.
+If true, must specify household, cluster, strata, and weights parameters in the function, and a finite
+population variance based on a pseudo-likelihood will be returned for your survey-weighted estimates.
+If false, superpopulation estimates will be returned with the usual asymptotic variance estimator.
+Defaults to \code{TRUE}.}
+
 \item{household}{column corresponding to household ID in \code{df}}
 
 \item{cluster}{column corresponding to cluster ID in \code{df}}
 
 \item{strata}{column corresponding to strata ID in \code{df}}
 
-\item{weights}{column corresponding to weights in \code{df}}
+\item{weights}{column corresponding to weights in \code{df}. If survey = FALSE, you may
+still specify a weights column, but note that the superpopulation variance will be returned
+as opposed to the finite population variance.}
 
 \item{p}{column corresponding to period ID (numeric) in \code{df}}
 
