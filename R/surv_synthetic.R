@@ -103,7 +103,7 @@ surv_synthetic <- function(df,
                            breakpoints = NA) {
   
   # error checking
-  if (survey & any(is.null(household, cluster, strata, weights))) {
+  if (survey & any(c(is.null(household), is.null(cluster), is.null(strata), is.null(weights)))) {
     stop("If survey == true, must specify household, cluster, strata, and weights columns")
   }
   
@@ -154,10 +154,11 @@ surv_synthetic <- function(df,
   temp <- df[,c(individual, household, cluster, strata, weights, p, a_pi, l_p,
                 I_i, A_i, t_i, t_0i, t_1i)]
   df <- temp
-  colnames(df) <- c("individual", "household", "cluster",
-                    "strata", "weights", "p", "a_pi", "l_p",
+  survey_cols_include <- !c(is.null(household), is.null(cluster), is.null(strata), is.null(weights))
+  colnames(df) <- c("individual", c("household", "cluster","strata","weights")[which(survey_cols_include)],
+                    "p", "a_pi", "l_p",
                     "I_i", "A_i", "t_i", "t_0i", "t_1i")
-  
+
   # make I_i == 2 if exactly observed
   df <- df %>% dplyr::mutate(I_i = ifelse((t_0i == t_1i) & I_i == 1, 2, I_i))
   
@@ -629,7 +630,6 @@ surv_synthetic <- function(df,
   } else {
     ret_lst <- list(result = ret_df,
                     optim = optim_res,
-                    grad = test_scores,
                     variance = vmat,
                     runtime = end_time - start_time)
   }
