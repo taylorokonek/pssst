@@ -103,7 +103,7 @@ surv_synthetic <- function(df,
                            breakpoints = NA) {
   
   # error checking
-  if (survey & any(is.na(household, cluster, strata, weights))) {
+  if (survey & any(is.null(household, cluster, strata, weights))) {
     stop("If survey == true, must specify household, cluster, strata, and weights columns")
   }
   
@@ -175,7 +175,7 @@ surv_synthetic <- function(df,
   l_p_cols <- paste0("l_p_",1:n_periods)
   
   # if no survey design and weights column unspecified, set weights = 1 for all individuals
-  if (!survey & is.na(weights)) {
+  if (!survey & is.null(weights)) {
     df$weights <- 1
   }
   
