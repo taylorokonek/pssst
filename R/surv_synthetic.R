@@ -103,8 +103,37 @@ surv_synthetic <- function(df,
                            breakpoints = NA) {
   
   # error checking
-  if (survey & any(c(is.null(household), is.null(cluster), is.null(strata), is.null(weights)))) {
-    stop("If survey == true, must specify household, cluster, strata, and weights columns")
+  if (survey & is.null(weights)) {
+    stop("If survey == true, must specify at least weights columns")
+  }
+  
+  # format ids = ~household+cluster
+  if (!is.null(household)) {
+    if (!is.null(cluster)) {
+      ids_form <- formula(paste0("~",household,"+",cluster))
+    } else {
+      ids_form <- formula(paste0("~",household))
+    }
+  } else {
+    if (!is.null(cluster)) {
+      ids_form <- formula(paste0("~",cluster))
+    } else {
+      ids_form <- formula("~1")
+    }
+  }
+  
+  # format strata = ~strata
+  if (!is.null(strata)) {
+    strata_form <- formula(paste0("~",strata))
+  } else {
+    strata_form = NULL
+  }
+  
+  # format weights = ~weights
+  if (!is.null(weights)) {
+    weights_form <- formula(paste0("~",weights))
+  } else {
+    weights_form <- NULL
   }
   
   # distribution errors
@@ -158,7 +187,7 @@ surv_synthetic <- function(df,
   colnames(df) <- c("individual", c("household", "cluster","strata","weights")[which(survey_cols_include)],
                     "p", "a_pi", "l_p",
                     "I_i", "A_i", "t_i", "t_0i", "t_1i")
-
+  
   # make I_i == 2 if exactly observed
   df <- df %>% dplyr::mutate(I_i = ifelse((t_0i == t_1i) & I_i == 1, 2, I_i))
   
@@ -319,7 +348,7 @@ surv_synthetic <- function(df,
                          hessian = TRUE)
       end_time <- Sys.time()
       end_time - start_time
-
+      
       if (survey) {
         message("computing finite population variance")
         
@@ -401,7 +430,7 @@ surv_synthetic <- function(df,
                                             num_periods = n_periods)
         }
       }
-     
+      
       # gompertz
     } else if (dist == 5) {
       message("fitting model")
@@ -475,9 +504,9 @@ surv_synthetic <- function(df,
   if (survey) {
     test_invinf <- solve(-optim_res$hessian)
     infl_fns <- test_scores %*% test_invinf
-    design <- survey::svydesign(ids=~cluster+household, 
-                                strata = ~strata,
-                                weights = ~weights, 
+    design <- survey::svydesign(ids = ids_form, 
+                                strata = strata_form,
+                                weights = weights_form, 
                                 data = df)
     vmat <- vcov(svytotal(infl_fns, design))
   } else {
@@ -567,7 +596,7 @@ surv_synthetic <- function(df,
       for (i in 1:nrow(ret_df)) {
         ret_df$U5MR[i] <- rcpp_F_gengamma(60, exp(ret_df$log_Q_mean)[i], exp(ret_df$log_mu_mean)[i], exp(ret_df$log_sigma_mean)[i], 1, 0)
       }
-    
+      
       # lognormal
     } else if (dist == 4) {
       ret_df <- data.frame(period = 1:n_periods,
@@ -579,7 +608,7 @@ surv_synthetic <- function(df,
       
       # add u5mr, nmr, imr to ret_df
       ret_df$U5MR <- plnorm(60, meanlog = ret_df$mu_mean, sdlog = exp(ret_df$log_sigma_mean))
-    
+      
       # gompertz
     } else if (dist == 5) {
       ret_df <- data.frame(period = 1:n_periods,
@@ -611,9 +640,9 @@ surv_synthetic <- function(df,
       ret_df$U5MR <- NA
       for (i in 1:nrow(ret_df)) {
         ret_df$U5MR[i] <- 1 - exp(-H_etsp(0, 60, a = exp(ret_df$log_a_mean[i]), 
-                                 b = exp(ret_df$log_b_mean[i]), 
-                                 c = 0,
-                                 p = exp(ret_df$log_p_mean[i])))
+                                          b = exp(ret_df$log_b_mean[i]), 
+                                          c = 0,
+                                          p = exp(ret_df$log_p_mean[i])))
       }
       
     }
