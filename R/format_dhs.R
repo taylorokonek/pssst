@@ -51,7 +51,7 @@ format_dhs <- function(df,
                        intervals = NA,
                        strata = c("v023", "v024", "v025")[1]) {
   
-  max_year <-period_boundaries[length(period_boundaries)]
+  max_year <- period_boundaries[length(period_boundaries)]
   
   # get year_cut from period_boundaries
   year_cut <- period_boundaries[-length(period_boundaries)]
@@ -196,11 +196,15 @@ format_dhs <- function(df,
   
   # censor children who "Died on day of birth"
   if (!(0 %in% lbs)) {
-    num_died_at_birth <- births %>% filter(exact_age == "Died on day of birth") %>% nrow()
-    message("Interval censoring ",num_died_at_birth, " children who died on day of birth from [0,1] day")
-    which_died <- which(births$exact_age == "Died on day of birth")
-    births[which_died,]$t1 <- 1/30
-    births[which_died,]$age_at_censoring <- 1/30
+    num_died_at_birth <- births %>% filter(exact_age == "Died on day of birth" |
+                                             exact_age == "died on day of birth") %>% nrow()
+    if (num_died_at_birth > 0) {
+      message("Interval censoring ",num_died_at_birth, " children who died on day of birth from [0,1] day")
+      which_died <- which(births$exact_age == "Died on day of birth" |
+                            births$exact_age == "died on day of birth")
+      births[which_died,]$t1 <- 1/30
+      births[which_died,]$age_at_censoring <- 1/30
+    }
   }
   
   # expand dataframe

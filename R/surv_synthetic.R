@@ -110,7 +110,7 @@ surv_synthetic <- function(df,
   # format ids = ~household+cluster
   if (!is.null(household)) {
     if (!is.null(cluster)) {
-      ids_form <- formula(paste0("~",household,"+",cluster))
+      ids_form <- formula(paste0("~",cluster,"+",household))
     } else {
       ids_form <- formula(paste0("~",household))
     }
