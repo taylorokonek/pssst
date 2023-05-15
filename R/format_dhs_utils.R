@@ -133,7 +133,7 @@ get_births <- function(dat,
     for (i in 2:length(strata)) {
       new_strata <- paste0(new_strata, datnew[,strata[i]])
     }
-    datanew$strata <- newstrata
+    datnew$strata <- new_strata
   }
   
   datnew$urban <- datnew$v025

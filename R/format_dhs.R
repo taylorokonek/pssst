@@ -168,6 +168,7 @@ format_dhs <- function(df,
   suppressWarnings(temp_df <- births %>% 
                      dplyr::mutate(exact_age = as.numeric(as.character(exact_age))))
   exact_rows <- which(temp_df$exact_age < 200 & temp_df$exact_age >= 100)
+  births$exact_age <- as.vector(births$exact_age) # extra change needed if data is loaded from rdhs
   exact_rows <- c(exact_rows,which(births$exact_age == "Days: 1"))
   
   # get birth in days
