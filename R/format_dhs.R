@@ -176,7 +176,7 @@ format_dhs <- function(df,
   suppressWarnings(temp_df <- births %>% 
                      dplyr::mutate(exact_age = as.numeric(as.character(exact_age))))
   exact_rows <- which(temp_df$exact_age < 200 & temp_df$exact_age >= 100)
-  exact_rows <- c(exact_rows,which(births$exact_age == "Days: 1"))
+  exact_rows <- c(exact_rows, which(births$exact_age == "Days: 1"))
   
   # get birth in days
   daily_births <- births[exact_rows,]$exact_age 
@@ -205,11 +205,13 @@ format_dhs <- function(df,
   # censor children who "Died on day of birth"
   if (!(0 %in% lbs)) {
     num_died_at_birth <- births %>% filter(exact_age == "Died on day of birth" |
-                                             exact_age == "died on day of birth") %>% nrow()
+                                             exact_age == "died on day of birth" |
+                                             exact_age == 100) %>% nrow()
     if (num_died_at_birth > 0) {
       message("Interval censoring ",num_died_at_birth, " children who died on day of birth from [0,1] day")
       which_died <- which(births$exact_age == "Died on day of birth" |
-                            births$exact_age == "died on day of birth")
+                            births$exact_age == "died on day of birth" |
+                            births$exact_age == 100)
       births[which_died,]$t1 <- 1/30
       births[which_died,]$age_at_censoring <- 1/30
     }
@@ -258,7 +260,12 @@ format_dhs <- function(df,
     }
   }
   
-  births[change_As,]$A_i <- 0
+  if(length(change_As) > 0) {
+    births[change_As,]$A_i <- 0
+  }
+  
+  # make sure I_i is exactly 1 or 0
+  births$I_i <- round(births$I_i)
   
   return(births)
 }

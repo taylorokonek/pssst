@@ -68,10 +68,10 @@ get_births <- function(dat,
   datnew$obsStop <- dat[, date.interview] + cmc.adjust
   
   # for those who are dead, obsStop is actually date of death, so adjust this
-  datnew$obsStop[dat[, alive] == "no"] <- datnew$dod[dat[, alive] == "no"]
+  datnew$obsStop[(dat[, alive] == "no") | (dat[,alive] == "0")] <- datnew$dod[(dat[, alive] == "no") | (dat[, alive] == "0")]
   
   # create death indicator "died"
-  datnew$died <- (dat[, alive] == "no")
+  datnew$died <- (dat[, alive] == "no") | (dat[,alive] == "0")
   
   # add child id as id.new
   datnew$id.new <- 1:nrow(datnew)
