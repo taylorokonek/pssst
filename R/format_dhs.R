@@ -63,6 +63,11 @@ format_dhs <- function(df,
                        strata = strata,
                        intervals = intervals)
   
+  # convert things to vectors (if needed, as would be the case if data comes from rdhs)
+  for (i in 1:ncol(births)) {
+    births[,i] <- as.vector(births[,i])
+  }
+  
   # remove individuals who died before min(year_cut)
   num_before <- length(which(births$year_died < min(year_cut)))
   if(num_before > 0) {
@@ -119,6 +124,9 @@ format_dhs <- function(df,
     # identify who dies after right_censor_time
     row_ids1 <- which(births$died & (births$age_at_censoring > right_censor_time))
     
+    rc_before_ids_final <- c()
+    rc_before_ids_final2 <- c()
+    
     if (length(row_ids1) > 0) {
       birth_dates <- paste(births[row_ids1,]$year_born, 
                            births[row_ids1,]$month_born, sep = "-") %>% ym()
@@ -168,7 +176,6 @@ format_dhs <- function(df,
   suppressWarnings(temp_df <- births %>% 
                      dplyr::mutate(exact_age = as.numeric(as.character(exact_age))))
   exact_rows <- which(temp_df$exact_age < 200 & temp_df$exact_age >= 100)
-  births$exact_age <- as.vector(births$exact_age) # extra change needed if data is loaded from rdhs
   exact_rows <- c(exact_rows,which(births$exact_age == "Days: 1"))
   
   # get birth in days
