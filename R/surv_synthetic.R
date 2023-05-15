@@ -508,7 +508,7 @@ surv_synthetic <- function(df,
                                 strata = strata_form,
                                 weights = weights_form, 
                                 data = df)
-    vmat <- vcov(svytotal(infl_fns, design))
+    vmat <- vcov(survey::svytotal(infl_fns, design))
   } else {
     message("computing superpopulation variance")
     vmat <- solve(optim_res$hessian)
