@@ -267,5 +267,11 @@ format_dhs <- function(df,
   # make sure I_i is exactly 1 or 0
   births$I_i <- round(births$I_i)
   
+  # make sure household, individual, cluster, and strata are all integers
+  births$individual <- round(births$individual)
+  births$household <- round(births$household)
+  births$cluster <- round(births$cluster)
+  births$strata <- round(as.numeric(births$strata))
+  
   return(births)
 }
