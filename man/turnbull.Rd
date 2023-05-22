@@ -2,7 +2,8 @@
 % Please edit documentation in R/turnbull.R
 \name{turnbull}
 \alias{turnbull}
-\title{Function to obtain Turbull estimates for arbitrarily censored and truncated observations}
+\title{Function to obtain Turbull estimates for arbitrarily censored and truncated
+observations}
 \usage{
 turnbull(
   df,
@@ -12,42 +13,62 @@ turnbull(
   righttrunc = "righttrunc",
   period = NA,
   weights = "weights",
-  niter
+  bootstrap_var = FALSE,
+  cluster = NULL,
+  strata = NULL,
+  niter,
+  niter_bootstrap = niter
 )
 }
 \arguments{
-\item{df}{a dataframe containing the output from \code{format_turnbull}, or optionally, dataframe
-containing the following columns}
+\item{df}{a dataframe containing the output from \code{format_turnbull}, or
+optionally, dataframe containing the following columns}
 
-\item{t_0i}{column corresponding to lower bound of interval if interval-censored,
-censoring time if right-censored, observed time if exactly observed, in \code{df}}
+\item{t_0i}{column corresponding to lower bound of interval if
+interval-censored, censoring time if right-censored, observed time if
+exactly observed, in \code{df}}
 
-\item{t_1i}{column corresponding to upper bound of interval if interval-censored,
-\code{Inf} if right-censored, observed time if exactly observed, in \code{df}}
+\item{t_1i}{column corresponding to upper bound of interval if
+interval-censored, \code{Inf} if right-censored, observed time if exactly
+observed, in \code{df}}
 
-\item{lefttrunc}{column corresponding to left-truncation time in \code{df}, 0 if not
-left-truncated}
+\item{lefttrunc}{column corresponding to left-truncation time in \code{df},
+0 if not left-truncated}
 
-\item{righttrunc}{column corresponding to right-truncation time \code{df}, \code{Inf} if not
-right-truncated}
+\item{righttrunc}{column corresponding to right-truncation time \code{df},
+\code{Inf} if not right-truncated}
 
-\item{period}{column corresponding to period identification in \code{df}. If specified, separate
-Turnbull estimates will be produced for each value in \code{period}.}
+\item{period}{column corresponding to period identification in \code{df}.
+If specified, separate Turnbull estimates will be produced for each value
+in \code{period}.}
 
 \item{weights}{column corresponding to weights in \code{df}}
 
+\item{bootstrap_var}{boolean indicating whether or not to calculate a finite
+population bootstrap variance for the Turnbull estimator. If
+\code{bootstrap_var = TRUE}, both \code{cluster} and \code{strata} must be
+specified.}
+
 \item{niter}{number of iterations to run the algorithm}
+
+\item{niter_bootstrap}{number of bootstrap samples to take when calculating
+bootstrap variance. If not specified, defaults to \code{niter}.}
 }
 \value{
 a list containing the following:
 \itemize{
 \item a dataframe of final estimates for specific times (and periods)
-\item a matrix of estimates at each iteration, with ncol = niter, or a list of such matrices for each period
+\item a matrix of estimates at each iteration, with ncol = niter, or a list
+of such matrices for each period
+\item if \code{bootstrap_var = TRUE}, a list containing a matrix of
+bootstrap samples for each period. If only one time period, just a single
+matrix
 \item number of iterations
 }
 }
 \description{
-Function to obtain Turbull estimates for arbitrarily censored and truncated observations
+Function to obtain Turbull estimates for arbitrarily censored and truncated
+observations
 }
 \author{
 Taylor Okonek
