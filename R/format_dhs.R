@@ -271,7 +271,7 @@ format_dhs <- function(df,
   births$individual <- round(births$individual)
   births$household <- round(births$household)
   births$cluster <- round(births$cluster)
-  births$strata <- round(as.numeric(births$strata))
+  #births$strata <- round(as.numeric(births$strata))
   
   return(births)
 }
