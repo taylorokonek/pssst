@@ -103,8 +103,16 @@ turnbull <- function(df,
       # - calculate turnbull estimator
       
       for (i in 1:niter_bootstrap) {
-        # sample clusters with replacement
-        boot_clusts <- sample(unique_clusts, size = length(unique_clusts), replace = TRUE)
+        # sample clusters with replacement within each strata
+        clust_samp <- c()
+        for (i in 1:length(unique(c_s_df$strata))) {
+          temp_clusts <- c_s_df[c_s_df[,strata] == unique(c_s_df[,strata])[i], cluster]
+          clust_samp <- c(boot_clusts, sample(temp_clusts, size = length(temp_clusts) - 1, replace = TRUE))
+          # length(temp_clusts) - 1 because setting m_h = n_h - 1 means we don't need
+          # a weight correction
+        }
+        
+        boot_clusts <- clust_samp
         
         # temporary boot_df with a single observation for each sampled cluster
         df_boot <- df[df[,cluster] %in% boot_clusts,]
@@ -124,9 +132,10 @@ turnbull <- function(df,
         }
         
         # add correction factor to design weights
-        df_boot <- suppressMessages(left_join(df_boot, h_df)) 
-        df_boot$correction <- df_boot$n_h / (df_boot$n_h - 1)
-        df_boot[,weights] <- df_boot[,weights] * df_boot$correction
+        # NO CORRECTION NEEDED if sample m_h = n_h - 1 from each strata h
+        # df_boot <- suppressMessages(left_join(df_boot, h_df)) 
+        # df_boot$correction <- df_boot$n_h / (df_boot$n_h - 1)
+        # df_boot[,weights] <- df_boot[,weights] * df_boot$correction
         
         # get turnbull estimator on bootstrapped dataset
         small_samp_est <- pssst:::rcpp_turnbull(niter = niter, 
