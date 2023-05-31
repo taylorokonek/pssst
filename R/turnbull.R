@@ -163,6 +163,7 @@ turnbull <- function(df,
                            var_est = boot_var)
       ret_lst <- list(result = res_df,
                       iterations = apply(res[[3]],2,function(x) {1 - cumsum(x)}),
+                      bootstrap_samps = apply(boot_mat,2,function(x) {1 - cumsum(x)}),
                       niter = niter,
                       niter_bootstrap = niter_bootstrap)
     } else {
@@ -180,7 +181,7 @@ turnbull <- function(df,
     df$period <- df[,period]
     
     # set up list for all periods
-    period_lst <- vector("list",length(unique(df$period)))
+    period_lst <- vector("list", length(unique(df$period)))
     
     # get upper and lower bounds for rcpp_turnbull in each period
     res_full <- rcpp_turnbull(niter = niter, 
@@ -289,7 +290,7 @@ turnbull <- function(df,
                              var_est = boot_var)
         ret_lst <- list(result = res_df,
                         iterations = apply(res[[3]],2,function(x) {1 - cumsum(x)}),
-                        bootstrap_samps = boot_mat,
+                        bootstrap_samps = apply(boot_mat,2,function(x) {1 - cumsum(x)}),
                         niter = niter,
                         niter_bootstrap = niter_bootstrap)
       } else {
