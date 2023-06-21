@@ -35,7 +35,7 @@ format_turnbull <- function(df) {
     test$t_1i <- c(test$lefttrunc[-1],test$t_i[1])
     
     # get rows where they are alive
-    test_small <- test[(test$a_pi >= -60) & (test$a_pi < test$t_i[1]),]
+    test_small <- test[(test$a_pi >= -test$l_p) & (test$a_pi < test$t_i[1]),]
     
     # for turnbull() function, t_0i needs to be censoring time, t_1i needs to be Inf 
     test_small$t_1i <- ifelse(test_small$t_1i > test_small$t_i[1], test_small$t_i[1], test_small$t_1i)
@@ -59,7 +59,7 @@ format_turnbull <- function(df) {
       which_cens <- tail(which(test$t_0i >= test$a_pi), 1)
       
       # which time periods are they alive in
-      which_alive <- which((test$t_0i >= test$a_pi) & (test$t_1i <= (test$a_pi + 60)))
+      which_alive <- which((test$t_0i >= test$a_pi) & (test$t_1i <= (test$a_pi + test$l_p)))
       
       # if they're only alive in one period...
       if (length(which_alive == 1)) {
@@ -76,7 +76,7 @@ format_turnbull <- function(df) {
     # if interval censored across time period boundary
     } else {
       # which time periods are they interval censored in
-      which_cens <- which((test$t_0i <= (test$a_pi + 60)) & (test$t_1i > test$a_pi))
+      which_cens <- which((test$t_0i <= (test$a_pi + test$l_p)) & (test$t_1i > test$a_pi))
       
       if (length(which_cens) != 2) {
         stop("function not built to handle people interval censored across three time periods yet")
