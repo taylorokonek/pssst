@@ -30,11 +30,13 @@ List rcpp_turnbull(int niter, NumericVector t0, NumericVector t1, NumericVector 
 	NumericVector temp(2 + t0.length() + t1.length());
 	temp(0) = 0;
 	temp(1) = R_PosInf;
-	for (int i = 2; i < t0.length(); i++) {
+	for (int i = 2; i < (t0.length() + 2); i++) {
 		temp(i) = t0(i - 2);
 		temp(i + t1.length()) = t1(i - 2);
 	}
 	NumericVector temp2 = sort_unique(temp);
+
+	Rcout << "temp2: " << temp2 << "\n";
 
 	// declare q_j and p_j for lower and upper bounds of intervals
 	NumericVector q_j, p_j;
@@ -67,6 +69,8 @@ List rcpp_turnbull(int niter, NumericVector t0, NumericVector t1, NumericVector 
 		}
 	}
 
+	Rcout << "num_closed: " << num_closed << "\n";
+
 	NumericVector which_closed(num_closed);
 	if (num_closed > 0) {
 		// figure out which values are closed intervals
@@ -81,6 +85,8 @@ List rcpp_turnbull(int niter, NumericVector t0, NumericVector t1, NumericVector 
 	
 	// get unique, exactly observed observations
 	NumericVector which_closed_unique = sort_unique(which_closed);
+
+	Rcout << "which_closed_unique: " << which_closed_unique << "\n";
 
 	// update q_j, p_j to include which_closed
 	NumericVector q_j_final, p_j_final;
@@ -106,6 +112,12 @@ List rcpp_turnbull(int niter, NumericVector t0, NumericVector t1, NumericVector 
 
 	q_j_final = q_j_final.sort();
 	p_j_final = p_j_final.sort();
+
+	Rcout << "q_j: " << q_j << "\n";
+	Rcout << "q_j_final: " << q_j_final << "\n";
+
+	Rcout << "p_j: " << p_j << "\n";
+	Rcout << "p_j_final: " << p_j_final << "\n";
 
 	// make lists of indicators for each individual
 	// alpha_ij: indicator that the interval is a subset of their censoring set
