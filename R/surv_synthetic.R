@@ -405,7 +405,7 @@ surv_synthetic <- function(df,
     } else if (dist == 4) {
       message("fitting model")
       start_time <- Sys.time()
-      optim_res <- optim(par = c(rep(1.1, n_periods * 2)),
+      optim_res <- optim(par = c(rep(1.1, n_periods), rep(-2, n_periods)),
                          fn = optim_fn,
                          data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
                          weights = df$weights,
