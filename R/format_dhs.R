@@ -78,12 +78,11 @@ format_dhs <- function(df,
   # remove individuals who are right-censored before min(year_cut)
   birth_dates <- suppressWarnings((paste(births$year_born, births$month_born, sep = "-") %>% ym()))
   right_censored_dates <- birth_dates %m+% months(births$age_at_censoring)
-  censored_before <- which(right_censored_dates < ym(paste0(min(year_cut), "-01")))
+  censored_before <- which(right_censored_dates <= ym(paste0(min(year_cut), "-01")))
   if (length(censored_before) > 0) {
     message(paste0("Removing ", length(censored_before), " children who were right censored before ", min(year_cut)))
     births <- births[-censored_before,]
   }
-  
   
   # if right_censor_time specified and they reached this age before min(year), remove them
   if (!is.na(right_censor_time)) {

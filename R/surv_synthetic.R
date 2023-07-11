@@ -193,6 +193,7 @@ surv_synthetic <- function(df,
   
   # get number of periods
   n_periods <- length(unique(df$p))
+  period_names <- unique(df$p)
   
   # pivot wider
   df <- df %>%
@@ -201,8 +202,10 @@ surv_synthetic <- function(df,
                        values_from = c(a_pi, l_p))
   
   # get column name indicators for a_pi and l_p
-  a_pi_cols <- paste0("a_pi_",1:n_periods)
-  l_p_cols <- paste0("l_p_",1:n_periods)
+  a_pi_cols <- paste0("a_pi_",period_names)
+  l_p_cols <- paste0("l_p_",period_names)
+
+ 
   
   # if no survey design and weights column unspecified, set weights = 1 for all individuals
   if (!survey & is.null(weights)) {
@@ -435,7 +438,7 @@ surv_synthetic <- function(df,
     } else if (dist == 5) {
       message("fitting model")
       start_time <- Sys.time()
-      optim_res <- optim(par = c(rep(-1, n_periods ), rep(15, n_periods)),
+      optim_res <- optim(par = c(rep(-10, n_periods ), rep(4, n_periods)),
                          fn = optim_fn,
                          data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
                          weights = df$weights,

@@ -53,13 +53,15 @@ format_turnbull <- function(df) {
     row_ids <- which(I1_df$individual == unique(I1_df$individual)[i])
     test <- I1_df[row_ids,]
     
+    A_i_orig <- test$A_i[1]
+    
     # if not interval censored across time period boundary
-    if (test$A_i[1] == 0) {
+    if (A_i_orig == 0) {
       # which time period are they interval censored in
       which_cens <- tail(which(test$t_0i >= test$a_pi), 1)
       
       # which time periods are they alive in
-      which_alive <- which((test$t_0i >= test$a_pi) & (test$t_1i <= (test$a_pi + test$l_p)))
+      which_alive <- which(((test$a_pi + test$l_p) > 0) & !((test$t_1i + test$l_p) <= (test$a_pi + test$l_p)))
       
       # if they're only alive in one period...
       if (length(which_alive == 1)) {
@@ -70,7 +72,23 @@ format_turnbull <- function(df) {
         # rbind
         ret_small <- rbind(ret_small, test_small)
       } else {
-        stop("function not built to handle yearly time periods yet, where individuals\ncan be alive through multiple time periods before being interval censored")
+        test_small <- test[which_cens,]
+        test_small$lefttrunc <- pmax(0, test_small$a_pi)
+        test_small$righttrunc <- Inf
+        
+        test_small_right <- test[which_alive[!(which_alive %in% which_cens)],]
+        test_small_right$t_0i <- test_small_right$a_pi + test_small_right$l_p
+        test_small_right$t_1i <- Inf
+        test_small_right$I_i <- 0
+        test_small_right$A_i <- 0
+        
+        test_small_right$lefttrunc <- pmax(test_small_right$a_pi,0)
+        test_small_right$righttrunc <- Inf
+        
+        test_small <- rbind(test_small_right, test_small)
+        
+        # rbind
+        ret_small <- rbind(ret_small, test_small)
       }
     
     # if interval censored across time period boundary
@@ -82,11 +100,33 @@ format_turnbull <- function(df) {
         stop("function not built to handle people interval censored across three time periods yet")
       }
       
+      # which time periods are they alive in
+      which_alive <- which(((test$a_pi + test$l_p) > 0) & !((test$t_1i + test$l_p) <= (test$a_pi + test$l_p)))
+      
+      # get the interval censored periods
       test_small <- test[which_cens,]
       test_small$t_0i <- c(test_small$t_0i[1], test_small$a_pi[2])
       test_small$t_1i <- c(test_small$a_pi[2], test_small$t_1i[1])
-      test_small$lefttrunc <- c(0, test_small$a_pi[2])
+      test_small$lefttrunc <- pmax(0, test_small$a_pi)
       test_small$righttrunc <- Inf
+      
+      # re-weight A_i = 1 intervals by length
+      interval_lengths <- test_small$t_1i - test_small$t_0i
+      test_small$weights <- test_small$weights * interval_lengths/sum(interval_lengths)
+      
+      # add in their right-censored times for earlier periods (if they have any)
+      if (length(which_alive) > 2) {
+        test_small_right <- test[which_alive[!(which_alive %in% which_cens)],]
+        test_small_right$t_0i <- test_small_right$a_pi + test_small_right$l_p
+        test_small_right$t_1i <- Inf
+        test_small_right$I_i <- 0
+        test_small_right$A_i <- 0
+        
+        test_small_right$lefttrunc <- pmax(test_small_right$a_pi,0)
+        test_small_right$righttrunc <- Inf
+        
+        test_small <- rbind(test_small_right, test_small)
+      }
       
       # rbind
       ret_small <- rbind(ret_small, test_small)
