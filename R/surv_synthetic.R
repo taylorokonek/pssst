@@ -54,7 +54,8 @@
 #' analytically. Analytical gradient is faster, but only available for Weibull and Exponential distributions
 #' at the moment.
 #' @param dist distribution. Currently supports "weibull", "exponential", 
-#' "piecewise_exponential", "gengamma", "lognormal", "gompertz", "etsp" (exponentially-truncated shifted power family)
+#' "piecewise_exponential", "gengamma", "lognormal", "gompertz", "etsp" (exponentially-truncated shifted power family),
+#' "loglogistic"
 #' @param breakpoints if distribution is "piecewise_exponential", the breakpoints (in months) where
 #' the distribution should be divided
 #' @param init_vals an optional vector of initial values at which to start the optimizer for the 
@@ -143,7 +144,7 @@ surv_synthetic <- function(df,
   
   # distribution errors
   if (!(dist %in% c("weibull", "exponential", "piecewise_exponential", 
-                    "gengamma", "lognormal", "gompertz","etsp"))) {
+                    "gengamma", "lognormal", "gompertz","etsp", "loglogistic"))) {
     stop("distribution not currently supported in surv_synthetic")
   }
   if (only_scale & (dist != "weibull")) {
@@ -180,8 +181,10 @@ surv_synthetic <- function(df,
     dist <- 4 
   } else if (dist == "gompertz") {
     dist <- 5 
+  } else if (dist == "etsp") {
+    dist <- 6 
   } else {
-    dist <- 6 # etsp: exponentially-trunacted shifted power 
+    dist <- 7 # loglogistic
   }
   
   # make new df with appropriate columns
@@ -202,7 +205,7 @@ surv_synthetic <- function(df,
   
   # check that init_vals is the correct length (if specified)
   if (!is.na(init_vals[1])) {
-    if (dist %in% c(4,5)) { # lognormal, gompertz
+    if (dist %in% c(4,5,7)) { # lognormal, gompertz
       if (length(init_vals) != (2 * n_periods)) {
         stop("Incorrect number of initial values supplied")
       }
@@ -574,6 +577,44 @@ surv_synthetic <- function(df,
                                             num_periods = n_periods)
         }
       }
+      
+      # loglogistc
+    } else if (dist == 7) {
+      message("fitting model")
+      
+      if (is.na(init_vals[1])) {
+        init_vals <- c(rep(-4, n_periods), rep(-4, n_periods))
+      }
+      
+      start_time <- Sys.time()
+      optim_res <- optim(par = init_vals,
+                         fn = optim_fn,
+                         data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
+                         weights = df$weights,
+                         shape_par_ids = 1:n_periods,
+                         dist = dist,
+                         breakpoints = breakpoints,
+                         num_periods = n_periods,
+                         method = "BFGS",
+                         hessian = TRUE)
+      end_time <- Sys.time()
+      end_time - start_time
+      
+      if (survey) {
+        message("computing finite population variance")
+        
+        test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
+        for (i in 1:nrow(df)) {
+          test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
+                                            x = optim_res$par, 
+                                            data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
+                                            weights = 1,
+                                            shape_par_ids = 1:n_periods,
+                                            dist = dist,
+                                            breakpoints = breakpoints,
+                                            num_periods = n_periods)
+        }
+      }
     }
   }
   
@@ -723,6 +764,18 @@ surv_synthetic <- function(df,
                                           p = exp(ret_df$log_p_mean[i])))
       }
       
+    } else if (dist == 7) {
+      ret_df <- data.frame(period = 1:n_periods,
+                           log_shape_mean = est[1:n_periods],
+                           log_scale_mean = est[(n_periods + 1):(n_periods*2)],
+                           log_shape_var = diag(vmat)[1:n_periods],
+                           log_scale_var = diag(vmat)[(n_periods + 1):(n_periods*2)])
+      
+      # add u5mr, nmr, imr to ret_df
+      ret_df$U5MR <- NA
+      for (i in 1:nrow(ret_df)) {
+        ret_df$U5MR[i] <- rcpp_F_loglogistic(60, shape = exp(ret_df$log_shape_mean[i]), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
+      }
     }
     
   }

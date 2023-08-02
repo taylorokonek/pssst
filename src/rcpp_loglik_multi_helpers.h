@@ -84,6 +84,52 @@ double rcpp_F_gompertz(double x, double rate, double shape, bool lower_tail, boo
   return(ret_val);
 }
 
+// [[Rcpp::export]]
+double rcpp_F_loglogistic(double x, double shape, double scale, bool lower_tail, bool give_log) {
+
+  double alpha = scale;
+  double beta = shape;
+  double ret_val;
+
+  ret_val = 1 - pow(1 + pow(x/alpha, beta), -1);
+
+  if (lower_tail) {
+    if (give_log) {
+      ret_val = log(ret_val);
+    } else {
+      ret_val = ret_val;
+    }
+  } else {
+    if (give_log) {
+      ret_val = log(1 - ret_val);
+    }  else {
+      ret_val = 1 - ret_val;
+    }
+  }
+
+  return(ret_val);
+}
+
+// [[Rcpp::export]]
+double rcpp_f_loglogistic(double x, double shape, double scale, bool give_log) {
+  double alpha = scale;
+  double beta = shape;
+  double ret_val;
+
+  ret_val = (beta/alpha) * pow(x/alpha, beta - 1) / pow(1 + pow(x/alpha, beta), 2);
+
+
+  if (give_log) {
+    ret_val = log(ret_val);
+  } else {
+    ret_val = ret_val;
+  }
+
+  return(ret_val);
+
+}
+
+
 // input shape = Q, location = omega, scale = sigma
 // [[Rcpp::export]]
 double rcpp_f_gompertz(double x, double rate, double shape, bool give_log) {
@@ -243,6 +289,13 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
   int err_code;
 
   ret_val += Numer::integrate(f, lower_bound, upper_bound, err_est, err_code);
+
+} else if (dist == 7) {
+
+  double scale_param = scale_vec[0];
+
+  ret_val = - rcpp_F_loglogistic(upper_bound, shape_param, scale_param, 0, 1) + rcpp_F_loglogistic(lower_bound, shape_param, scale_param, 0, 1);
+
 }
 
   return(ret_val);
@@ -303,6 +356,12 @@ double rcpp_l_hazard(double x, double log_shape, NumericVector log_scale_vec, in
     double p = scale_vec[1];
 
     ret_val = log(a) - p * log(x + c) - b * x;
+  } else if (dist == 7) {
+
+    numerator = rcpp_f_loglogistic(x, shape_param, scale_vec[0], 1);
+    denominator = rcpp_F_loglogistic(x, shape_param, scale_vec[0], 0, 1);
+    ret_val = numerator - denominator;
+
   }
 
   return(ret_val);

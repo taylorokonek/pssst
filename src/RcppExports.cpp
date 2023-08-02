@@ -115,6 +115,35 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rcpp_F_loglogistic
+double rcpp_F_loglogistic(double x, double shape, double scale, bool lower_tail, bool give_log);
+RcppExport SEXP _pssst_rcpp_F_loglogistic(SEXP xSEXP, SEXP shapeSEXP, SEXP scaleSEXP, SEXP lower_tailSEXP, SEXP give_logSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type x(xSEXP);
+    Rcpp::traits::input_parameter< double >::type shape(shapeSEXP);
+    Rcpp::traits::input_parameter< double >::type scale(scaleSEXP);
+    Rcpp::traits::input_parameter< bool >::type lower_tail(lower_tailSEXP);
+    Rcpp::traits::input_parameter< bool >::type give_log(give_logSEXP);
+    rcpp_result_gen = Rcpp::wrap(rcpp_F_loglogistic(x, shape, scale, lower_tail, give_log));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rcpp_f_loglogistic
+double rcpp_f_loglogistic(double x, double shape, double scale, bool give_log);
+RcppExport SEXP _pssst_rcpp_f_loglogistic(SEXP xSEXP, SEXP shapeSEXP, SEXP scaleSEXP, SEXP give_logSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type x(xSEXP);
+    Rcpp::traits::input_parameter< double >::type shape(shapeSEXP);
+    Rcpp::traits::input_parameter< double >::type scale(scaleSEXP);
+    Rcpp::traits::input_parameter< bool >::type give_log(give_logSEXP);
+    rcpp_result_gen = Rcpp::wrap(rcpp_f_loglogistic(x, shape, scale, give_log));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rcpp_f_gompertz
 double rcpp_f_gompertz(double x, double rate, double shape, bool give_log);
 RcppExport SEXP _pssst_rcpp_f_gompertz(SEXP xSEXP, SEXP rateSEXP, SEXP shapeSEXP, SEXP give_logSEXP) {
@@ -172,6 +201,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_pssst_rcpp_F_gengamma", (DL_FUNC) &_pssst_rcpp_F_gengamma, 6},
     {"_pssst_rcpp_f_gengamma", (DL_FUNC) &_pssst_rcpp_f_gengamma, 5},
     {"_pssst_rcpp_F_gompertz", (DL_FUNC) &_pssst_rcpp_F_gompertz, 5},
+    {"_pssst_rcpp_F_loglogistic", (DL_FUNC) &_pssst_rcpp_F_loglogistic, 5},
+    {"_pssst_rcpp_f_loglogistic", (DL_FUNC) &_pssst_rcpp_f_loglogistic, 4},
     {"_pssst_rcpp_f_gompertz", (DL_FUNC) &_pssst_rcpp_f_gompertz, 4},
     {"_pssst_rcpp_hazard_integral", (DL_FUNC) &_pssst_rcpp_hazard_integral, 6},
     {"_pssst_rcpp_turnbull", (DL_FUNC) &_pssst_rcpp_turnbull, 8},

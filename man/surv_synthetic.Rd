@@ -75,7 +75,8 @@ analytically. Analytical gradient is faster, but only available for Weibull and 
 at the moment.}
 
 \item{dist}{distribution. Currently supports "weibull", "exponential",
-"piecewise_exponential", "gengamma", "lognormal", "gompertz", "etsp" (exponentially-truncated shifted power family)}
+"piecewise_exponential", "gengamma", "lognormal", "gompertz", "etsp" (exponentially-truncated shifted power family),
+"loglogistic"}
 
 \item{breakpoints}{if distribution is "piecewise_exponential", the breakpoints (in months) where
 the distribution should be divided}

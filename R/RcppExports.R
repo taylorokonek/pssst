@@ -29,6 +29,14 @@ rcpp_F_gompertz <- function(x, rate, shape, lower_tail, give_log) {
     .Call(`_pssst_rcpp_F_gompertz`, x, rate, shape, lower_tail, give_log)
 }
 
+rcpp_F_loglogistic <- function(x, shape, scale, lower_tail, give_log) {
+    .Call(`_pssst_rcpp_F_loglogistic`, x, shape, scale, lower_tail, give_log)
+}
+
+rcpp_f_loglogistic <- function(x, shape, scale, give_log) {
+    .Call(`_pssst_rcpp_f_loglogistic`, x, shape, scale, give_log)
+}
+
 rcpp_f_gompertz <- function(x, rate, shape, give_log) {
     .Call(`_pssst_rcpp_f_gompertz`, x, rate, shape, give_log)
 }
