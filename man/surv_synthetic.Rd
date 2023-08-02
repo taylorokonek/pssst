@@ -23,7 +23,8 @@ surv_synthetic(
   only_scale = FALSE,
   numerical_grad = FALSE,
   dist = "weibull",
-  breakpoints = NA
+  breakpoints = NA,
+  init_vals = NA
 )
 }
 \arguments{
@@ -78,6 +79,10 @@ at the moment.}
 
 \item{breakpoints}{if distribution is "piecewise_exponential", the breakpoints (in months) where
 the distribution should be divided}
+
+\item{init_vals}{an optional vector of initial values at which to start the optimizer for the
+parameters. Must specify the appropriate number of parameters for the given distribution /
+number of periods.}
 }
 \value{
 A list containing:
@@ -89,6 +94,7 @@ order arrange(time). Each matrix will have rows arranged in order arrange(region
 \item variance: the finite population variance-covariance matrix
 \item design: the survey design object
 \item runtime: runtime for likelihood optimization
+\item initial_values: initial values for parameters used in likelihood maximization
 }
 }
 \description{

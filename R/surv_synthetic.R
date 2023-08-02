@@ -57,6 +57,9 @@
 #' "piecewise_exponential", "gengamma", "lognormal", "gompertz", "etsp" (exponentially-truncated shifted power family)
 #' @param breakpoints if distribution is "piecewise_exponential", the breakpoints (in months) where
 #' the distribution should be divided
+#' @param init_vals an optional vector of initial values at which to start the optimizer for the 
+#' parameters. Must specify the appropriate number of parameters for the given distribution /
+#' number of periods.
 #' @return A list containing: 
 #' \itemize{
 #' \item result: a dataframe of summarized results
@@ -66,6 +69,7 @@
 #' \item variance: the finite population variance-covariance matrix
 #' \item design: the survey design object
 #' \item runtime: runtime for likelihood optimization
+#' \item initial_values: initial values for parameters used in likelihood maximization
 #' } 
 #' 
 #' @author Taylor Okonek
@@ -100,7 +104,8 @@ surv_synthetic <- function(df,
                            only_scale = FALSE,
                            numerical_grad = FALSE,
                            dist = "weibull",
-                           breakpoints = NA) {
+                           breakpoints = NA,
+                           init_vals = NA) {
   
   # error checking
   if (survey & is.null(weights)) {
@@ -195,6 +200,37 @@ surv_synthetic <- function(df,
   n_periods <- length(unique(df$p))
   period_names <- unique(df$p)
   
+  # check that init_vals is the correct length (if specified)
+  if (!is.na(init_vals[1])) {
+    if (dist %in% c(4,5)) { # lognormal, gompertz
+      if (length(init_vals) != (2 * n_periods)) {
+        stop("Incorrect number of initial values supplied")
+      }
+    } else if (dist == 0) { # exponential
+      if (length(init_vals) != (n_periods)) {
+        stop("Incorrect number of initial values supplied")
+      }
+    } else if (dist == 1) { # weibull
+      if (only_scale) {
+        if (length(init_vals) != (1 + n_periods)) {
+          stop("Incorrect number of initial values supplied")
+        }
+      } else {
+        if (length(init_vals) != (2 * n_periods)) {
+          stop("Incorrect number of initial values supplied")
+        }
+      }
+    } else if (dist %in% c(3,6)) {# gengamma, etsp
+      if (length(init_vals) != (3 * n_periods)) {
+        stop("Incorrect number of initial values supplied")
+      }
+    } else { # piecewise exponential (dist == 2)
+      if (length(init_vals) != (n_periods * (length(breakpoints) + 1))) {
+        stop("Incorrect number of initial values supplied")
+      }
+    }
+  }
+  
   # pivot wider
   df <- df %>%
     tidyr::pivot_wider(id_cols = c(individual, household, cluster, strata, weights, I_i, A_i, t_i, t_0i, t_1i),
@@ -216,8 +252,12 @@ surv_synthetic <- function(df,
   if (only_scale) {
     message("fitting model")
     
+    if (is.na(init_vals[1])) {
+      init_vals <- c(rep(-1,1), rep(15, n_periods))
+    }
+    
     start_time <- Sys.time()
-    optim_res <- optim(par = c(rep(-1,1), rep(15, n_periods)),
+    optim_res <- optim(par = init_vals,
                        fn = optim_fn,
                        data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
                        weights = df$weights,
@@ -257,8 +297,13 @@ surv_synthetic <- function(df,
     # weibull
     if (dist == 1) {
       message("fitting model")
+      
+      if (is.na(init_vals[1])) {
+        init_vals <- c(rep(-1,n_periods), rep(15, n_periods))
+      }
+
       start_time <- Sys.time()
-      optim_res <- optim(par = c(rep(-1,n_periods), rep(15, n_periods)),
+      optim_res <- optim(par = init_vals,
                          fn = optim_fn,
                          data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
                          weights = df$weights,
@@ -297,8 +342,13 @@ surv_synthetic <- function(df,
       # exponential
     } else if (dist == 0) {
       message("fitting model")
+      
+      if (is.na(init_vals[1])) {
+        init_vals <- c(rep(15, n_periods))
+      }
+
       start_time <- Sys.time()
-      optim_res <- optim(par = c(rep(15, n_periods)),
+      optim_res <- optim(par = init_vals,
                          fn = optim_fn,
                          data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
                          weights = df$weights,
@@ -338,8 +388,13 @@ surv_synthetic <- function(df,
       # piecewise exponential
     } else if (dist == 2) {
       message("fitting model")
+      
+      if (is.na(init_vals[1])) {
+        init_vals <- c(rep(15, n_periods * (length(breakpoints) + 1)))
+      }
+      
       start_time <- Sys.time()
-      optim_res <- optim(par = c(rep(15, n_periods * (length(breakpoints) + 1))),
+      optim_res <- optim(par = init_vals,
                          fn = optim_fn,
                          data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
                          weights = df$weights,
@@ -371,8 +426,13 @@ surv_synthetic <- function(df,
       # generalized gamma
     } else if (dist == 3) {
       message("fitting model")
+      
+      if (is.na(init_vals[1])) {
+        init_vals <- c(rep(1,n_periods), rep(1, n_periods * 2))
+      }
+      
       start_time <- Sys.time()
-      optim_res <- optim(par = c(rep(1,n_periods), rep(1, n_periods * 2)),
+      optim_res <- optim(par = init_vals,
                          fn = optim_fn,
                          data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
                          weights = df$weights,
@@ -404,8 +464,13 @@ surv_synthetic <- function(df,
       # lognormal
     } else if (dist == 4) {
       message("fitting model")
+      
+      if (is.na(init_vals[1])) {
+        init_vals <- c(rep(1.1, n_periods), rep(-2, n_periods))
+      }
+      
       start_time <- Sys.time()
-      optim_res <- optim(par = c(rep(1.1, n_periods), rep(-2, n_periods)),
+      optim_res <- optim(par = init_vals,
                          fn = optim_fn,
                          data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
                          weights = df$weights,
@@ -437,8 +502,13 @@ surv_synthetic <- function(df,
       # gompertz
     } else if (dist == 5) {
       message("fitting model")
+      
+      if (is.na(init_vals[1])) {
+        init_vals <- c(rep(-10, n_periods ), rep(4, n_periods))
+      }
+      
       start_time <- Sys.time()
-      optim_res <- optim(par = c(rep(-10, n_periods ), rep(4, n_periods)),
+      optim_res <- optim(par = init_vals,
                          fn = optim_fn,
                          data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
                          weights = df$weights,
@@ -470,8 +540,13 @@ surv_synthetic <- function(df,
       # etsp
     } else if (dist == 6) {
       message("fitting model")
+      
+      if (is.na(init_vals[1])) {
+        init_vals <- c(rep(-4, n_periods), rep(-4, n_periods * 2))
+      }
+      
       start_time <- Sys.time()
-      optim_res <- optim(par = c(rep(-4, n_periods), rep(-4, n_periods * 2)),
+      optim_res <- optim(par = init_vals,
                          fn = optim_fn,
                          data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
                          weights = df$weights,
@@ -658,12 +733,14 @@ surv_synthetic <- function(df,
                     grad = test_scores,
                     variance = vmat,
                     design = design,
-                    runtime = end_time - start_time)
+                    runtime = end_time - start_time,
+                    initial_values = init_vals)
   } else {
     ret_lst <- list(result = ret_df,
                     optim = optim_res,
                     variance = vmat,
-                    runtime = end_time - start_time)
+                    runtime = end_time - start_time,
+                    initial_values = init_vals)
   }
   
   return(ret_lst)
