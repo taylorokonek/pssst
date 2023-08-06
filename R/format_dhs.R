@@ -56,6 +56,53 @@ format_dhs <- function(df,
   # get year_cut from period_boundaries
   year_cut <- period_boundaries[-length(period_boundaries)]
   
+  # if any of the necessary variables are haven_labelled, change them
+  if (class(df$b5)[1] == "haven_labelled") {
+    # convert some variables to factors
+    alive <- attr(df$b5, which = "labels")
+    names(alive) <- tolower(names(alive))
+    df$b5 <- ifelse(unclass(df$b5) == alive["yes"][[1]], "yes", "no")
+    df$b5 <- factor(df$b5, levels = c("yes", "no"))
+  }
+  
+  if (class(df$b6)[1] == "haven_labelled") {
+    # convert some variables to factors
+    exact_labels <- attr(df$b6, which = "labels")
+    names(exact_labels) <- tolower(names(exact_labels))
+    
+    # the only two we care about are died on day of birt
+    temp <- unclass(df$b6)
+    for (j in 1:length(exact_labels)) {
+      temp <- ifelse(temp == exact_labels[j], names(exact_labels)[j], temp)
+    }
+    df$b6 <- temp
+  }
+  
+  if (class(df$v025)[1] == "haven_labelled") {
+    strat <- attr(df$v025,which='labels')
+    names(strat) <- tolower(names(strat))
+    df$v025 <- ifelse(unclass(df$v025) == strat["urban"][[1]],'urban','rural')
+    df$v025 <- factor(df$v025, levels = c('urban','rural'))
+  }
+    
+  if (class(df$v023)[1] == "haven_labelled") {
+    df$v023 <- df$v023 %>% unclass()
+    df$v023 <- factor(df$v023, levels = df$v023 %>% table() %>% names(),
+                      labels = attr(df$v023, which = "labels") %>% names())
+  }
+    
+  if (class(df$v022)[1] == "haven_labelled") {
+    births$v022 <- births$v022 %>% unclass()
+    births$v022 <- factor(births$v022, levels = births$v022 %>% table() %>% names(),
+                          labels = attr(births$v022, which = "labels") %>% names())
+  }
+
+  if (class(df$v024)[1] == "haven_labelled") {
+    births$v024 <- births$v024 %>% unclass()
+    births$v024 <- factor(births$v024, levels = births$v024 %>% table() %>% names(),
+                          labels = attr(births$v024, which = "labels") %>% names())
+  }
+  
   # call get_births
   births <- get_births(dat = df, 
                        surveyyear = survey_year, 
@@ -175,11 +222,11 @@ format_dhs <- function(df,
   suppressWarnings(temp_df <- births %>% 
                      dplyr::mutate(exact_age = as.numeric(as.character(exact_age))))
   exact_rows <- which(temp_df$exact_age < 200 & temp_df$exact_age >= 100)
-  exact_rows <- c(exact_rows, which(births$exact_age == "Days: 1"))
+  exact_rows <- c(exact_rows, which(births$exact_age %in% c("Days: 1", "days: 1")))
   
   # get birth in days
   daily_births <- births[exact_rows,]$exact_age 
-  suppressWarnings(daily_births <- ifelse(daily_births == "Days: 1", 1, as.numeric(as.character(daily_births)) - 100))
+  suppressWarnings(daily_births <- ifelse(daily_births %in% c("Days: 1", "days: 1"), 1, as.numeric(as.character(daily_births)) - 100))
   daily_births <- daily_births / 30 # transform to months
   
   # if any exact births are within intervals specified, don't alter them
@@ -198,8 +245,10 @@ format_dhs <- function(df,
   }
   
   # replace t0 and t1 in dataframe with daily_births
-  births[exact_rows,]$t0 <- daily_births
-  births[exact_rows,]$t1 <- daily_births
+  if (length(exact_rows) > 0) {
+    births[exact_rows,]$t0 <- daily_births
+    births[exact_rows,]$t1 <- daily_births
+  }
   
   # censor children who "Died on day of birth"
   if (!(0 %in% lbs)) {
