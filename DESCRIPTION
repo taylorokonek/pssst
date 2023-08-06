@@ -18,13 +18,14 @@ RoxygenNote: 7.2.3
 Depends:
     magrittr,
     dplyr,
+    stringr,
+    lubridate,
     flexsurv
 Imports: 
     Rcpp (>= 1.0.9),
     dplyr,
     survey,
     numDeriv,
-    lubridate,
     RcppNumerical
 LinkingTo: 
     Rcpp,
