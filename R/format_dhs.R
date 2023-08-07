@@ -92,15 +92,15 @@ format_dhs <- function(df,
   }
     
   if (class(df$v022)[1] == "haven_labelled") {
-    births$v022 <- births$v022 %>% unclass()
-    births$v022 <- factor(births$v022, levels = births$v022 %>% table() %>% names(),
-                          labels = attr(births$v022, which = "labels") %>% names())
+    df$v022 <- df$v022 %>% unclass()
+    df$v022 <- factor(df$v022, levels = df$v022 %>% table() %>% names(),
+                      labels = attr(df$v022, which = "labels") %>% names())
   }
 
   if (class(df$v024)[1] == "haven_labelled") {
-    births$v024 <- births$v024 %>% unclass()
-    births$v024 <- factor(births$v024, levels = births$v024 %>% table() %>% names(),
-                          labels = attr(births$v024, which = "labels") %>% names())
+    df$v024 <- df$v024 %>% unclass()
+    df$v024 <- factor(df$v024, levels = df$v024 %>% table() %>% names(),
+                          labels = attr(df$v024, which = "labels") %>% names())
   }
   
   # call get_births
