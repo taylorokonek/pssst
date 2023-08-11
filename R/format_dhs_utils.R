@@ -84,6 +84,9 @@ get_births <- function(dat,
   # for those who did not die: max(age at censoring, 60 months)
   
   whichnotdied <- which(datnew$died == 0)
+  if (class(datnew$age_at_censoring) == "data.frame") {
+    datnew$age_at_censoring <- datnew$age_at_censoring[, date.interview]
+  }
   # EDIT - fix this so that the interval ending with Inf doesn't have a closed right bracket
   datnew$age_interval <- cut(datnew$age_at_censoring, breaks = c(0,month.cut), include.lowest = TRUE, right = FALSE)
   
