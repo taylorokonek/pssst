@@ -229,6 +229,7 @@ format_dhs <- function(df,
   # get birth in days
   daily_births <- births[exact_rows,]$exact_age 
   suppressWarnings(daily_births <- ifelse(daily_births %in% c("Days: 1", "days: 1"), 1, as.numeric(as.character(daily_births)) - 100))
+  daily_births <- ifelse(daily_births > 90, 0, daily_births) # Deal with special cases - assume died at 0 days
   daily_births <- daily_births / 30 # transform to months
   
   # if any exact births are within intervals specified, don't alter them
