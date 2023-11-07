@@ -163,6 +163,11 @@ surv_synthetic <- function(df,
     }
   }
   
+  # Check that t_0i <= t_1i everywhere
+  if(sum(df[,t_0i] <= df[,t_1i]) != nrow(df)) {
+    stop("at least one observation has an interval-censored time where t_0 > t_1")
+  }
+  
   # remove 0 and Inf from breakpoints, if needed, and sort
   if (!is.na(breakpoints[1])) {
     breakpoints <- sort(breakpoints[!(breakpoints %in% c(0, Inf))])
