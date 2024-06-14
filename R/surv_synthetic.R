@@ -209,7 +209,7 @@ surv_synthetic <- function(df,
   period_names <- unique(df$p)
   
   # Throw error if time period is neither an integer nor a string
-  if (class(df$p) != "numeric") {
+  if (!(class(df$p) %in% c("numeric","integer"))) {
     stop("Period must be an integer-valued, numeric column.")
   }
   if (sum(round(df$p) - df$p) != 0) {
@@ -219,6 +219,14 @@ surv_synthetic <- function(df,
   # Throw warning if more than 20 time periods are present
   if (n_periods > 20) {
     warning(paste0("This warning appears if you have more than 20 time periods present in your data. ", n_periods, " periods are present in your data. Please make sure you specified the correct column for time period within the function."))
+  }
+  
+  # check that a_pi is unique for each individual in each time period
+  num_diff_a_pis <- df %>% group_by(individual) %>%
+    summarize(temp = length(unique(a_pi))) %>%
+    dplyr::select(temp) %>% unlist %>% unname() %>% unique() %>% length()
+  if (num_diff_a_pis > 1) {
+    stop("Each individual much have a distinct a_pi value in each time period.")
   }
   
   # check that init_vals is the correct length (if specified)
