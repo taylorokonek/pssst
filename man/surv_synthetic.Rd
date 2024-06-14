@@ -49,7 +49,7 @@ Defaults to \code{TRUE}.}
 still specify a weights column, but note that the superpopulation variance will be returned
 as opposed to the finite population variance.}
 
-\item{p}{column corresponding to period ID (numeric) in \code{df}}
+\item{p}{column corresponding to period ID (must be integer-valued, numeric) in \code{df}}
 
 \item{a_pi}{column corresponding to child's age at beginning of time period in \code{df}}
 

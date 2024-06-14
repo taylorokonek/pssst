@@ -38,7 +38,7 @@
 #' @param weights column corresponding to weights in \code{df}. If survey = FALSE, you may
 #' still specify a weights column, but note that the superpopulation variance will be returned
 #' as opposed to the finite population variance. 
-#' @param p column corresponding to period ID (numeric) in \code{df}
+#' @param p column corresponding to period ID (must be integer-valued, numeric) in \code{df}
 #' @param a_pi column corresponding to child's age at beginning of time period in \code{df}
 #' @param l_p column corresponding to length of time period in \code{df}
 #' @param I_i column corresponding to indicator for interval censoring in \code{df}. Should be 1 if
@@ -207,6 +207,19 @@ surv_synthetic <- function(df,
   # get number of periods
   n_periods <- length(unique(df$p))
   period_names <- unique(df$p)
+  
+  # Throw error if time period is neither an integer nor a string
+  if (class(df$p) != "numeric") {
+    stop("Period must be an integer-valued, numeric column.")
+  }
+  if (sum(round(df$p) - df$p) != 0) {
+    stop("Period must be an integer-valued, numeric column.")
+  }
+  
+  # Throw warning if more than 20 time periods are present
+  if (n_periods > 20) {
+    warning(paste0("This warning appears if you have more than 20 time periods present in your data. ", n_periods, " periods are present in your data. Please make sure you specified the correct column for time period within the function."))
+  }
   
   # check that init_vals is the correct length (if specified)
   if (!is.na(init_vals[1])) {
