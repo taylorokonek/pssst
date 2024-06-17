@@ -674,6 +674,9 @@ surv_synthetic <- function(df,
     ret_df$U5MR_upper <- ret_df$U5MR + 1.96 * sqrt(ret_df$U5MR_var)
     ret_df$U5MR_lower <- ret_df$U5MR - 1.96 * sqrt(ret_df$U5MR_var)
     
+    ret_df$IMR <- p_weibull(12, log_shape = ret_df$log_shape_mean, log_scale = ret_df$log_scale_mean)
+    ret_df$NMR <- p_weibull(1, log_shape = ret_df$log_shape_mean, log_scale = ret_df$log_scale_mean)
+    
   } else {
     
     # weibull
@@ -691,6 +694,9 @@ surv_synthetic <- function(df,
       ret_df$U5MR_upper <- ret_df$U5MR + 1.96 * sqrt(ret_df$U5MR_var)
       ret_df$U5MR_lower <- ret_df$U5MR - 1.96 * sqrt(ret_df$U5MR_var)
       
+      ret_df$IMR <- p_weibull(12, log_shape = ret_df$log_shape_mean, log_scale = ret_df$log_scale_mean)
+      ret_df$NMR <- p_weibull(1, log_shape = ret_df$log_shape_mean, log_scale = ret_df$log_scale_mean)
+      
       # exponential
     } else if (dist == 0) {
       ret_df <- data.frame(period = 1:n_periods,
@@ -703,6 +709,9 @@ surv_synthetic <- function(df,
       ret_df$U5MR_var <- diag(delta_vmat)
       ret_df$U5MR_upper <- ret_df$U5MR + 1.96 * sqrt(ret_df$U5MR_var)
       ret_df$U5MR_lower <- ret_df$U5MR - 1.96 * sqrt(ret_df$U5MR_var)
+      
+      ret_df$IMR <- p_weibull(12, log_shape = 1, log_scale = ret_df$log_scale_mean)
+      ret_df$NMR <- p_weibull(1, log_shape = 1, log_scale = ret_df$log_scale_mean)
       
       # piecewise exponential
     } else if (dist == 2) {
@@ -721,8 +730,12 @@ surv_synthetic <- function(df,
       
       # add u5mr, nmr, imr to ret_df
       ret_df$U5MR <- NA
+      ret_df$IMR <- NA
+      ret_df$NMR <- NA
       for (i in 1:nrow(ret_df)) {
         ret_df$U5MR[i] <- p_piecewise_exponential(60, log_scales = unlist(ret_df[i,c(2:(length(breakpoints) + 2))]), breakpoints = breakpoints)
+        ret_df$IMR[i] <- p_piecewise_exponential(12, log_scales = unlist(ret_df[i,c(2:(length(breakpoints) + 2))]), breakpoints = breakpoints)
+        ret_df$NMR[i] <- p_piecewise_exponential(1, log_scales = unlist(ret_df[i,c(2:(length(breakpoints) + 2))]), breakpoints = breakpoints)
       }
       
       # generalized gamma
@@ -738,8 +751,12 @@ surv_synthetic <- function(df,
       
       # add u5mr, nmr, imr to ret_df
       ret_df$U5MR <- NA
+      ret_df$IMR <- NA
+      ret_df$NMR <- NA
       for (i in 1:nrow(ret_df)) {
         ret_df$U5MR[i] <- rcpp_F_gengamma(60, exp(ret_df$log_Q_mean)[i], exp(ret_df$log_mu_mean)[i], exp(ret_df$log_sigma_mean)[i], 1, 0)
+        ret_df$IMR[i] <- rcpp_F_gengamma(12, exp(ret_df$log_Q_mean)[i], exp(ret_df$log_mu_mean)[i], exp(ret_df$log_sigma_mean)[i], 1, 0)
+        ret_df$NMR[i] <- rcpp_F_gengamma(1, exp(ret_df$log_Q_mean)[i], exp(ret_df$log_mu_mean)[i], exp(ret_df$log_sigma_mean)[i], 1, 0)
       }
       
       # lognormal
@@ -753,6 +770,8 @@ surv_synthetic <- function(df,
       
       # add u5mr, nmr, imr to ret_df
       ret_df$U5MR <- plnorm(60, meanlog = ret_df$mu_mean, sdlog = exp(ret_df$log_sigma_mean))
+      ret_df$IMR <- plnorm(12, meanlog = ret_df$mu_mean, sdlog = exp(ret_df$log_sigma_mean))
+      ret_df$NMR <- plnorm(1, meanlog = ret_df$mu_mean, sdlog = exp(ret_df$log_sigma_mean))
       
       # gompertz
     } else if (dist == 5) {
@@ -764,8 +783,12 @@ surv_synthetic <- function(df,
       
       # add u5mr, nmr, imr to ret_df
       ret_df$U5MR <- NA
+      ret_df$IMR <- NA
+      ret_df$NMR <- NA
       for (i in 1:nrow(ret_df)) {
         ret_df$U5MR[i] <- rcpp_F_gompertz(60, rate = 1/exp(ret_df$log_scale_mean[i]), shape = exp(ret_df$log_shape_mean[i]), 1, 0)
+        ret_df$IMR[i] <- rcpp_F_gompertz(12, rate = 1/exp(ret_df$log_scale_mean[i]), shape = exp(ret_df$log_shape_mean[i]), 1, 0)
+        ret_df$NMR[i] <- rcpp_F_gompertz(1, rate = 1/exp(ret_df$log_scale_mean[i]), shape = exp(ret_df$log_shape_mean[i]), 1, 0)
       }
       
       # etsp
@@ -783,8 +806,18 @@ surv_synthetic <- function(df,
       
       # add u5mr, nmr, imr to ret_df
       ret_df$U5MR <- NA
+      ret_df$IMR <- NA
+      ret_df$NMR <- NA
       for (i in 1:nrow(ret_df)) {
         ret_df$U5MR[i] <- 1 - exp(-H_etsp(0, 60, a = exp(ret_df$log_a_mean[i]), 
+                                          b = exp(ret_df$log_b_mean[i]), 
+                                          c = 0,
+                                          p = exp(ret_df$log_p_mean[i])))
+        ret_df$IMR[i] <- 1 - exp(-H_etsp(0, 12, a = exp(ret_df$log_a_mean[i]), 
+                                          b = exp(ret_df$log_b_mean[i]), 
+                                          c = 0,
+                                          p = exp(ret_df$log_p_mean[i])))
+        ret_df$NMR[i] <- 1 - exp(-H_etsp(0, 1, a = exp(ret_df$log_a_mean[i]), 
                                           b = exp(ret_df$log_b_mean[i]), 
                                           c = 0,
                                           p = exp(ret_df$log_p_mean[i])))
