@@ -13,6 +13,7 @@ get_births <- function(dat,
                        surveyyear, 
                        strata, 
                        year.cut,
+                       cmc.adjust = 0,
                        intervals) {
   
   # additional definitions
@@ -24,7 +25,7 @@ get_births <- function(dat,
   age <- "b7"
   exact_age <- "b6"
   age.truncate <- 24
-  cmc.adjust <- 0
+  # cmc.adjust <- 0
   date.interview <- "v008"
   month.cut <- c(seq(1,24), seq(36,12*100, by = 12))
   
@@ -190,7 +191,7 @@ df_expand <- function(surv_df,
   message("Data frame expanded. Getting indicator for individuals censored across time period boundaries")
   
   # convert l_p to months
-  surv_df_expanded$l_p <- ((surv_df_expanded$l_p %>% as.numeric())/30) %>% floor()
+  surv_df_expanded$l_p <- floor((surv_df_expanded$l_p %>% as.numeric())/30) 
   
   # Get A_i indicator for interval censored observations that are interval censored across
   # the boundary of a time period

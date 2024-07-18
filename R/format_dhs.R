@@ -18,6 +18,9 @@
 #' intervals are the ones observed in DHS: exact daily deaths before 1 month, monthly through age 24 months, yearly after.
 #' Days will be reported as 1/30th of a month. If an individual "Died on day of birth", they are
 #' interval censored from [0, 1/30]
+#' @param cmc_adjust number of months to add to the recorded month in the dataset. As an example, 
+#' the Ethiopian calendar is 92 months behind the Gregorian calendar in general, so if a DHS survey
+#' from Ethiopia is used, \code{cmc_adjust} should be set to 92. Default value is 0.
 #' @param strata a string vector containing which column in \code{df} contains the strata 
 #' information. Can be multiple columns. Defaults to "v023".
 #' @return A dataframe containing the births recode in a format that can be input to \code{surv_synthetic}. Each
@@ -49,6 +52,7 @@ format_dhs <- function(df,
                        period_boundaries, 
                        right_censor_time = NA,
                        intervals = NA,
+                       cmc_adjust = 0,
                        strata = c("v023", "v024", "v025")[1]) {
   
   max_year <- period_boundaries[length(period_boundaries)]
@@ -108,6 +112,7 @@ format_dhs <- function(df,
                        surveyyear = survey_year, 
                        year.cut = year_cut, 
                        strata = strata,
+                       cmc.adjust = cmc_adjust,
                        intervals = intervals)
   
   # convert things to vectors (if needed, as would be the case if data comes from rdhs)

@@ -16,11 +16,11 @@
 #' \eqn{\gamma \sim Gamma(Q^{-2}, 1)} and \eqn{\omega = \log(Q^2 \gamma) / Q}, then \eqn{x = \exp(\mu + \sigma \omega)}
 #' follows the generalized gamma distribution with pdf
 #' 
-#' \deqn{f(x \mid \mu, \sigma, Q) = \frac{|Q| (Q^{-2}^{Q^{-2}})}{\sigma x \Gamma(Q^{-2})} \exp(Q^{-2}(Q \omega - \exp(Q \omega)))}
+#' \deqn{f(x \mid \mu, \sigma, Q) = \frac{|Q| (Q^{-2})^{Q^{-2}}}{\sigma x \Gamma(Q^{-2})} \exp(Q^{-2}(Q \omega - \exp(Q \omega)))}
 #' 
 #' The "etsp" distribution uses the exponentially-trunacted shifted power family of hazards defined by
 #' 
-#' \deqn{h(x) = a(x + c)^{-p} e^{-b x}},
+#' \deqn{h(x) = a(x + c)^{-p} e^{-b x}}
 #' 
 #' in Scholey (2019), but sets \eqn{c = 0}.
 #' 
