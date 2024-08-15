@@ -89,12 +89,14 @@ format_dhs <- function(df,
     df$v025 <- factor(df$v025, levels = c('urban','rural'))
   }
     
-  if (class(df$v023)[1] == "haven_labelled") {
-    df$v023 <- df$v023 %>% unclass()
-    df$v023 <- factor(df$v023, levels = df$v023 %>% table() %>% names(),
-                      labels = attr(df$v023, which = "labels") %>% names())
+  if (!("v023" %in% strata)) {
+    if (class(df$v023)[1] == "haven_labelled") {
+      df$v023 <- df$v023 %>% unclass()
+      df$v023 <- factor(df$v023, levels = df$v023 %>% table() %>% names(),
+                        labels = attr(df$v023, which = "labels") %>% names())
+    }
   }
-    
+
   if (class(df$v022)[1] == "haven_labelled") {
     df$v022 <- df$v022 %>% unclass()
     df$v022 <- factor(df$v022, levels = df$v022 %>% table() %>% names(),
