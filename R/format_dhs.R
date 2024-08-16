@@ -82,7 +82,7 @@ format_dhs <- function(df,
     df$b6 <- temp
   }
   
-  if (!("v025" %in% strata)) {
+  if ("v025" %in% strata) {
     if (class(df$v025)[1] == "haven_labelled") {
       strat <- attr(df$v025,which='labels')
       names(strat) <- tolower(names(strat))
@@ -91,7 +91,7 @@ format_dhs <- function(df,
     }
   }
   
-  if (!("v023" %in% strata)) {
+  if ("v023" %in% strata) {
     if (class(df$v023)[1] == "haven_labelled") {
       df$v023 <- df$v023 %>% unclass()
       df$v023 <- factor(df$v023, levels = df$v023 %>% table() %>% names(),
@@ -99,7 +99,7 @@ format_dhs <- function(df,
     }
   }
   
-  if (!("v022" %in% strata)) {
+  if ("v022" %in% strata) {
     if (class(df$v022)[1] == "haven_labelled") {
       df$v022 <- df$v022 %>% unclass()
       df$v022 <- factor(df$v022, levels = df$v022 %>% table() %>% names(),
@@ -107,7 +107,7 @@ format_dhs <- function(df,
     }
   }
   
-  if (!("v024" %in% strata)) {
+  if ("v024" %in% strata) {
     if (class(df$v024)[1] == "haven_labelled") {
       df$v024 <- df$v024 %>% unclass()
       df$v024 <- factor(df$v024, levels = df$v024 %>% table() %>% names(),
