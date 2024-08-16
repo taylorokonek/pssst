@@ -82,13 +82,15 @@ format_dhs <- function(df,
     df$b6 <- temp
   }
   
-  if (class(df$v025)[1] == "haven_labelled") {
-    strat <- attr(df$v025,which='labels')
-    names(strat) <- tolower(names(strat))
-    df$v025 <- ifelse(unclass(df$v025) == strat["urban"][[1]],'urban','rural')
-    df$v025 <- factor(df$v025, levels = c('urban','rural'))
+  if (!("v025" %in% strata)) {
+    if (class(df$v025)[1] == "haven_labelled") {
+      strat <- attr(df$v025,which='labels')
+      names(strat) <- tolower(names(strat))
+      df$v025 <- ifelse(unclass(df$v025) == strat["urban"][[1]],'urban','rural')
+      df$v025 <- factor(df$v025, levels = c('urban','rural'))
+    }
   }
-    
+  
   if (!("v023" %in% strata)) {
     if (class(df$v023)[1] == "haven_labelled") {
       df$v023 <- df$v023 %>% unclass()
@@ -96,17 +98,21 @@ format_dhs <- function(df,
                         labels = attr(df$v023, which = "labels") %>% names())
     }
   }
-
-  if (class(df$v022)[1] == "haven_labelled") {
-    df$v022 <- df$v022 %>% unclass()
-    df$v022 <- factor(df$v022, levels = df$v022 %>% table() %>% names(),
-                      labels = attr(df$v022, which = "labels") %>% names())
+  
+  if (!("v022" %in% strata)) {
+    if (class(df$v022)[1] == "haven_labelled") {
+      df$v022 <- df$v022 %>% unclass()
+      df$v022 <- factor(df$v022, levels = df$v022 %>% table() %>% names(),
+                        labels = attr(df$v022, which = "labels") %>% names())
+    }
   }
-
-  if (class(df$v024)[1] == "haven_labelled") {
-    df$v024 <- df$v024 %>% unclass()
-    df$v024 <- factor(df$v024, levels = df$v024 %>% table() %>% names(),
-                          labels = attr(df$v024, which = "labels") %>% names())
+  
+  if (!("v024" %in% strata)) {
+    if (class(df$v024)[1] == "haven_labelled") {
+      df$v024 <- df$v024 %>% unclass()
+      df$v024 <- factor(df$v024, levels = df$v024 %>% table() %>% names(),
+                        labels = attr(df$v024, which = "labels") %>% names())
+    }
   }
   
   # call get_births
@@ -161,7 +167,7 @@ format_dhs <- function(df,
   died_after_max <- which((!is.na(died_dates)) & (died_dates >= max_date))
   
   new_rightcensoringage <- floor(-((ym(paste(births$year_born, births$month_born, sep = "-")) - 
-                              ym(paste0(max_year,"-01")))[died_after_max]) / 30)
+                                      ym(paste0(max_year,"-01")))[died_after_max]) / 30)
   
   row_ids <- died_after_max
   # instead make them right censored
@@ -306,7 +312,7 @@ format_dhs <- function(df,
       new_t_i <- min(temp$t_i[1],max(temp$a_pi + temp$l_p))
       births[which(births$individual == uniq_indivs[i]),]$t_i <- new_t_i
       
-    # if interval-censored or exactly observed, make sure 
+      # if interval-censored or exactly observed, make sure 
     } else {
       new_t_1i <- min(temp$t_1i[1],max(temp$a_pi + temp$l_p))
       new_t_0i <- max(temp$t_0i[1], min(temp$a_pi))
