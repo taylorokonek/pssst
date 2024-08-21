@@ -93,11 +93,25 @@ format_dhs <- function(df,
   
   if ("v023" %in% strata) {
     if (class(df$v023)[1] == "haven_labelled") {
+      # check if there are any strata with no data
       strata_names <- attr(df$v023, which = "labels") %>% names()
       strata_names <- strata_names[strata_names != "missing"]
+      
+      # all possible strata values
+      strata_vals <- attr(df$v023, which = "labels") %>% unname()
+      
+      # strata with observations in data frame
       df$v023 <- df$v023 %>% unclass()
-      df$v023 <- factor(df$v023, levels = df$v023 %>% table() %>% names(),
-                        labels = strata_names)
+      obs_vals <- df$v023 %>% unique %>% sort()
+      which_missing <- strata_vals[!(strata_vals %in% obs_vals)]
+      
+      if (length(which_missing) > 0) {
+        df$v023 <- factor(df$v023, levels = df$v023 %>% table() %>% names(),
+                          labels = strata_names[-which_missing])
+      } else {
+        df$v023 <- factor(df$v023, levels = df$v023 %>% table() %>% names(),
+                          labels = strata_names)
+      }
     }
   }
   
