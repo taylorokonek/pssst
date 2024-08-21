@@ -93,9 +93,11 @@ format_dhs <- function(df,
   
   if ("v023" %in% strata) {
     if (class(df$v023)[1] == "haven_labelled") {
+      strata_names <- attr(df$v023, which = "labels") %>% names()
+      strata_names <- strata_names[strata_names != "missing"]
       df$v023 <- df$v023 %>% unclass()
       df$v023 <- factor(df$v023, levels = df$v023 %>% table() %>% names(),
-                        labels = attr(df$v023, which = "labels") %>% names())
+                        labels = strata_names)
     }
   }
   
