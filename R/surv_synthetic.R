@@ -144,7 +144,8 @@ surv_synthetic <- function(df,
   
   # distribution errors
   if (!(dist %in% c("weibull", "exponential", "piecewise_exponential", 
-                    "gengamma", "lognormal", "gompertz","etsp", "loglogistic"))) {
+                    "gengamma", "lognormal", "gompertz","etsp", "loglogistic", 
+                    "dagum"))) {
     stop("distribution not currently supported in surv_synthetic")
   }
   if (only_scale & (dist != "weibull")) {
@@ -161,6 +162,11 @@ surv_synthetic <- function(df,
     if (!numerical_grad) {
       stop("analytical gradient only available for exponential and weibull dist. must set numerical_grad = TRUE")
     }
+  }
+  
+  # Check that t_0i <= t_1i everywhere
+  if(sum(df[, t_0i] > df[, t_1i], na.rm=T) != 0) {
+    stop("at least one observation has an interval-censored time where t_0 > t_1")
   }
   
   # remove 0 and Inf from breakpoints, if needed, and sort
@@ -183,10 +189,11 @@ surv_synthetic <- function(df,
     dist <- 5 
   } else if (dist == "etsp") {
     dist <- 6 
-  } else {
+  } else if (dist == "loglogistic") {
     dist <- 7 # loglogistic
+  } else if (dist == "dagum") {
+    dist <- 8 
   }
-  
   # make new df with appropriate columns
   temp <- df[,c(individual, household, cluster, strata, weights, p, a_pi, l_p,
                 I_i, A_i, t_i, t_0i, t_1i)]
@@ -483,6 +490,7 @@ surv_synthetic <- function(df,
                          num_periods = n_periods,
                          method = "BFGS",
                          hessian = TRUE)
+      # glimpse(optim_res)
       end_time <- Sys.time()
       end_time - start_time
       
@@ -615,11 +623,49 @@ surv_synthetic <- function(df,
                                             num_periods = n_periods)
         }
       }
+    } else if (dist == 8) {
+    message("fitting model")
+    
+    if (is.na(init_vals[1])) {
+      init_vals <- c(rep(-4, n_periods), rep(-4, n_periods), rep(-4, n_periods))
     }
+
+    start_time <- Sys.time()
+    optim_res <- optim(par = init_vals,
+                       fn = optim_fn,
+                       data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
+                       weights = df$weights,
+                       shape_par_ids = 1:n_periods,
+                       # shape_par_ids = 1:n_periods,
+                       dist = dist,
+                       breakpoints = breakpoints,
+                       num_periods = n_periods,
+                       method = "BFGS",
+                       hessian = TRUE)
+    end_time <- Sys.time()
+    end_time - start_time
+    
+    if (survey) {
+      message("computing finite population variance")
+      
+      test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
+      for (i in 1:nrow(df)) {
+        test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
+                                          x = optim_res$par, 
+                                          data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
+                                          weights = 1,
+                                          shape_par_ids = 1:n_periods,
+                                          dist = dist,
+                                          breakpoints = breakpoints,
+                                          num_periods = n_periods)
+      }
+    }
+  }
   }
   
   # get finite pop variances
   est <- optim_res$par
+  
   if (survey) {
     test_invinf <- solve(-optim_res$hessian)
     infl_fns <- test_scores %*% test_invinf
@@ -781,7 +827,45 @@ surv_synthetic <- function(df,
         ret_df$IMR[i] <- rcpp_F_loglogistic(12, shape = exp(ret_df$log_shape_mean[i]), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
       }
     }
+    else if (dist == 8) {
+
+      ret_df <- data.frame(period = 1:n_periods,
+                           log_p_mean = est[1:n_periods])
+      
+      ret_df <- cbind(ret_df, data.frame(est[(n_periods+1):length(est)] %>%
+                                           matrix(nrow = n_periods, byrow = TRUE)))
+      
+      colnames(ret_df)[c(3:4)] <- c("log_a_mean", "log_b_mean")
+      
+      ret_df$log_p_var <- diag(vmat)[1:n_periods]
+      ret_df <- cbind(ret_df, data.frame(diag(vmat)[(n_periods+1):length(est)] %>%
+                                           matrix(nrow = n_periods, byrow = TRUE)))
+      colnames(ret_df)[c(6:7)] <- c("log_a_var", "log_b_var")
+      
+      
+      
+
+      # add u5mr, nmr, imr to ret_df
+      ret_df$U5MR <- NA
+      ret_df$NMR <- NA
+      ret_df$IMR <- NA
+      
+      for (i in 1:nrow(ret_df)) {
+        ret_df$U5MR[i] <- rcpp_F_dagum(60,
+                                       shape1 = exp(ret_df$log_p_mean[i]),
+                                       shape2 = exp(ret_df$log_a_mean[i]), 
+                                       scale = exp(ret_df$log_b_mean[i]), 1, 0)
+        ret_df$NMR[i] <- rcpp_F_dagum(1,
+                                      shape1 = exp(ret_df$log_p_mean[i]),  
+                                      shape2 = exp(ret_df$log_a_mean[i]), 
+                                      scale = exp(ret_df$log_b_mean[i]), 1, 0)
+        ret_df$IMR[i] <- rcpp_F_dagum(12, 
+                                      shape1 = exp(ret_df$log_p_mean[i]),  
+                                      shape2 = exp(ret_df$log_a_mean[i]), 
+                                      scale = exp(ret_df$log_b_mean[i]), 1, 0)
+      }
     
+    }
   }
   
   if (survey) {

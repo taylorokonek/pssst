@@ -33,6 +33,8 @@ using namespace Rcpp;
 // 4 = lognormal
 // 5 = Gompertz
 // 6 = ETSP: Exponentially-trunacted shifted-power
+// 7 = Log-logistic
+// 8 = Dagum
 //
 // breakpoints: vector of breakpoints for piecewise exponential distribution (not used for other distributions)
 // par_period_id: integer vector of length j = 1, ..., J containing ids for which period log_scales[j] belongs to (values 1:P, possibly repeated)
@@ -109,6 +111,8 @@ NumericVector rcpp_loglik_multi(DataFrame x_df, int num_periods, NumericVector l
             } 
           }
           H_i += rcpp_hazard_integral(std::max(a_pi[j], 0.0), std::min(x(i, 2), a_pi[j] + l_p[j]), log_shape_internal[j], which_vals, dist, breakpoints);
+          // Rcout << "cumulative hazard, right-censored : " << H_i << "\n";
+          
         }
       }
       
@@ -133,7 +137,10 @@ NumericVector rcpp_loglik_multi(DataFrame x_df, int num_periods, NumericVector l
               which_vals_counter += 1;
             } 
           }
+          //Rcout << "inputs t0: " <<  std::max(a_pi[j], 0.0) << "," << std::min(x(i, 3), a_pi[j] + l_p[j]) << ", ";
           H_i0 += rcpp_hazard_integral(std::max(a_pi[j], 0.0), std::min(x(i, 3), a_pi[j] + l_p[j]), log_shape_internal[j], which_vals, dist, breakpoints);
+         // Rcout << "t0 cumulative hazard, interval-censored : " << H_i0 << "\n";
+          
         }
       }
       
@@ -152,10 +159,11 @@ NumericVector rcpp_loglik_multi(DataFrame x_df, int num_periods, NumericVector l
               which_vals_counter += 1;
             } 
           }
+          //Rcout << "inputs t1: " <<  std::max(a_pi[j], 0.0) << "," << std::min(x(i, 4), a_pi[j] + l_p[j]) << ", logshape=" << log_shape_internal[j] << "whichvals=" << which_vals;
           H_i1 += rcpp_hazard_integral(std::max(a_pi[j], 0.0), std::min(x(i, 4), a_pi[j] + l_p[j]), log_shape_internal[j], which_vals, dist, breakpoints);
+          //Rcout << "t1 cumulative hazard, interval-censored: " << H_i1 << "\n";
         }
       }
-
       ret_vec[i] = log(exp(-H_i0) - exp(-H_i1));
 
       // if observed exactly...
@@ -206,6 +214,6 @@ NumericVector rcpp_loglik_multi(DataFrame x_df, int num_periods, NumericVector l
     }  
 
   }
-  
+  // Rcout << "loglik returned : " << sum(ret_vec) << "\n";
   return(ret_vec);
 }

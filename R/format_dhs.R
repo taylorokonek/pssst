@@ -158,12 +158,14 @@ format_dhs <- function(df,
   
   row_ids <- died_after_max
   # instead make them right censored
-  births[row_ids,]$right_censored <- TRUE
-  births[row_ids,]$interval_censored <- FALSE
-  births[row_ids,]$died <- FALSE
-  births[row_ids,]$age_at_censoring <- new_rightcensoringage
-  births[row_ids,]$t0 <- 0
-  births[row_ids,]$t1 <- Inf
+  if (length(row_ids) > 0) {
+    births[row_ids,]$right_censored <- TRUE
+    births[row_ids,]$interval_censored <- FALSE
+    births[row_ids,]$died <- FALSE
+    births[row_ids,]$age_at_censoring <- new_rightcensoringage
+    births[row_ids,]$t0 <- 0
+    births[row_ids,]$t1 <- Inf
+  }
   
   # if a right_censor_time is specified, do that
   if (!is.na(right_censor_time)) {
@@ -216,6 +218,9 @@ format_dhs <- function(df,
     }
     
   }
+  
+  # deal with special case (exact age 199 set to 0 months)
+  births$exact_age <- ifelse(births$exact_age == 199, 200, births$exact_age)
   
   # death with exact days of death
   # get rows where child's death is recorded in days
