@@ -16,11 +16,11 @@
 #' \eqn{\gamma \sim Gamma(Q^{-2}, 1)} and \eqn{\omega = \log(Q^2 \gamma) / Q}, then \eqn{x = \exp(\mu + \sigma \omega)}
 #' follows the generalized gamma distribution with pdf
 #' 
-#' \deqn{f(x \mid \mu, \sigma, Q) = \frac{|Q| (Q^{-2}^{Q^{-2}})}{\sigma x \Gamma(Q^{-2})} \exp(Q^{-2}(Q \omega - \exp(Q \omega)))}
+#' \deqn{f(x \mid \mu, \sigma, Q) = \frac{|Q| (Q^{-2})^{Q^{-2}}}{\sigma x \Gamma(Q^{-2})} \exp(Q^{-2}(Q \omega - \exp(Q \omega)))}
 #' 
 #' The "etsp" distribution uses the exponentially-trunacted shifted power family of hazards defined by
 #' 
-#' \deqn{h(x) = a(x + c)^{-p} e^{-b x}},
+#' \deqn{h(x) = a(x + c)^{-p} e^{-b x}}
 #' 
 #' in Scholey (2019), but sets \eqn{c = 0}.
 #' 
@@ -38,7 +38,7 @@
 #' @param weights column corresponding to weights in \code{df}. If survey = FALSE, you may
 #' still specify a weights column, but note that the superpopulation variance will be returned
 #' as opposed to the finite population variance. 
-#' @param p column corresponding to period ID (numeric) in \code{df}
+#' @param p column corresponding to period ID (must be integer-valued, numeric) in \code{df}
 #' @param a_pi column corresponding to child's age at beginning of time period in \code{df}
 #' @param l_p column corresponding to length of time period in \code{df}
 #' @param I_i column corresponding to indicator for interval censoring in \code{df}. Should be 1 if
@@ -209,6 +209,27 @@ surv_synthetic <- function(df,
   # get number of periods
   n_periods <- length(unique(df$p))
   period_names <- unique(df$p)
+  
+  # Throw error if time period is neither an integer nor a string
+  if (!(class(df$p) %in% c("numeric","integer"))) {
+    stop("Period must be an integer-valued, numeric column.")
+  }
+  if (sum(round(df$p) - df$p) != 0) {
+    stop("Period must be an integer-valued, numeric column.")
+  }
+  
+  # Throw warning if more than 20 time periods are present
+  if (n_periods > 20) {
+    warning(paste0("This warning appears if you have more than 20 time periods present in your data. ", n_periods, " periods are present in your data. Please make sure you specified the correct column for time period within the function."))
+  }
+  
+  # check that a_pi is unique for each individual in each time period
+  num_diff_a_pis <- df %>% group_by(individual) %>%
+    summarize(temp = length(unique(a_pi))) %>%
+    dplyr::select(temp) %>% unlist %>% unname() %>% unique() %>% length()
+  if (num_diff_a_pis > 1) {
+    stop("Each individual much have a distinct a_pi value in each time period.")
+  }
   
   # check that init_vals is the correct length (if specified)
   if (!is.na(init_vals[1])) {
@@ -694,6 +715,9 @@ surv_synthetic <- function(df,
     ret_df$U5MR_upper <- ret_df$U5MR + 1.96 * sqrt(ret_df$U5MR_var)
     ret_df$U5MR_lower <- ret_df$U5MR - 1.96 * sqrt(ret_df$U5MR_var)
     
+    ret_df$IMR <- p_weibull(12, log_shape = ret_df$log_shape_mean, log_scale = ret_df$log_scale_mean)
+    ret_df$NMR <- p_weibull(1, log_shape = ret_df$log_shape_mean, log_scale = ret_df$log_scale_mean)
+    
   } else {
     
     # weibull
@@ -711,6 +735,9 @@ surv_synthetic <- function(df,
       ret_df$U5MR_upper <- ret_df$U5MR + 1.96 * sqrt(ret_df$U5MR_var)
       ret_df$U5MR_lower <- ret_df$U5MR - 1.96 * sqrt(ret_df$U5MR_var)
       
+      ret_df$IMR <- p_weibull(12, log_shape = ret_df$log_shape_mean, log_scale = ret_df$log_scale_mean)
+      ret_df$NMR <- p_weibull(1, log_shape = ret_df$log_shape_mean, log_scale = ret_df$log_scale_mean)
+      
       # exponential
     } else if (dist == 0) {
       ret_df <- data.frame(period = 1:n_periods,
@@ -723,6 +750,9 @@ surv_synthetic <- function(df,
       ret_df$U5MR_var <- diag(delta_vmat)
       ret_df$U5MR_upper <- ret_df$U5MR + 1.96 * sqrt(ret_df$U5MR_var)
       ret_df$U5MR_lower <- ret_df$U5MR - 1.96 * sqrt(ret_df$U5MR_var)
+      
+      ret_df$IMR <- p_weibull(12, log_shape = 1, log_scale = ret_df$log_scale_mean)
+      ret_df$NMR <- p_weibull(1, log_shape = 1, log_scale = ret_df$log_scale_mean)
       
       # piecewise exponential
     } else if (dist == 2) {
@@ -741,8 +771,12 @@ surv_synthetic <- function(df,
       
       # add u5mr, nmr, imr to ret_df
       ret_df$U5MR <- NA
+      ret_df$IMR <- NA
+      ret_df$NMR <- NA
       for (i in 1:nrow(ret_df)) {
         ret_df$U5MR[i] <- p_piecewise_exponential(60, log_scales = unlist(ret_df[i,c(2:(length(breakpoints) + 2))]), breakpoints = breakpoints)
+        ret_df$IMR[i] <- p_piecewise_exponential(12, log_scales = unlist(ret_df[i,c(2:(length(breakpoints) + 2))]), breakpoints = breakpoints)
+        ret_df$NMR[i] <- p_piecewise_exponential(1, log_scales = unlist(ret_df[i,c(2:(length(breakpoints) + 2))]), breakpoints = breakpoints)
       }
       
       # generalized gamma
@@ -758,8 +792,12 @@ surv_synthetic <- function(df,
       
       # add u5mr, nmr, imr to ret_df
       ret_df$U5MR <- NA
+      ret_df$IMR <- NA
+      ret_df$NMR <- NA
       for (i in 1:nrow(ret_df)) {
         ret_df$U5MR[i] <- rcpp_F_gengamma(60, exp(ret_df$log_Q_mean)[i], exp(ret_df$log_mu_mean)[i], exp(ret_df$log_sigma_mean)[i], 1, 0)
+        ret_df$IMR[i] <- rcpp_F_gengamma(12, exp(ret_df$log_Q_mean)[i], exp(ret_df$log_mu_mean)[i], exp(ret_df$log_sigma_mean)[i], 1, 0)
+        ret_df$NMR[i] <- rcpp_F_gengamma(1, exp(ret_df$log_Q_mean)[i], exp(ret_df$log_mu_mean)[i], exp(ret_df$log_sigma_mean)[i], 1, 0)
       }
       
       # lognormal
@@ -773,6 +811,8 @@ surv_synthetic <- function(df,
       
       # add u5mr, nmr, imr to ret_df
       ret_df$U5MR <- plnorm(60, meanlog = ret_df$mu_mean, sdlog = exp(ret_df$log_sigma_mean))
+      ret_df$IMR <- plnorm(12, meanlog = ret_df$mu_mean, sdlog = exp(ret_df$log_sigma_mean))
+      ret_df$NMR <- plnorm(1, meanlog = ret_df$mu_mean, sdlog = exp(ret_df$log_sigma_mean))
       
       # gompertz
     } else if (dist == 5) {
@@ -784,8 +824,12 @@ surv_synthetic <- function(df,
       
       # add u5mr, nmr, imr to ret_df
       ret_df$U5MR <- NA
+      ret_df$IMR <- NA
+      ret_df$NMR <- NA
       for (i in 1:nrow(ret_df)) {
         ret_df$U5MR[i] <- rcpp_F_gompertz(60, rate = 1/exp(ret_df$log_scale_mean[i]), shape = exp(ret_df$log_shape_mean[i]), 1, 0)
+        ret_df$IMR[i] <- rcpp_F_gompertz(12, rate = 1/exp(ret_df$log_scale_mean[i]), shape = exp(ret_df$log_shape_mean[i]), 1, 0)
+        ret_df$NMR[i] <- rcpp_F_gompertz(1, rate = 1/exp(ret_df$log_scale_mean[i]), shape = exp(ret_df$log_shape_mean[i]), 1, 0)
       }
       
       # etsp
@@ -803,8 +847,18 @@ surv_synthetic <- function(df,
       
       # add u5mr, nmr, imr to ret_df
       ret_df$U5MR <- NA
+      ret_df$IMR <- NA
+      ret_df$NMR <- NA
       for (i in 1:nrow(ret_df)) {
         ret_df$U5MR[i] <- 1 - exp(-H_etsp(0, 60, a = exp(ret_df$log_a_mean[i]), 
+                                          b = exp(ret_df$log_b_mean[i]), 
+                                          c = 0,
+                                          p = exp(ret_df$log_p_mean[i])))
+        ret_df$IMR[i] <- 1 - exp(-H_etsp(0, 12, a = exp(ret_df$log_a_mean[i]), 
+                                          b = exp(ret_df$log_b_mean[i]), 
+                                          c = 0,
+                                          p = exp(ret_df$log_p_mean[i])))
+        ret_df$NMR[i] <- 1 - exp(-H_etsp(0, 1, a = exp(ret_df$log_a_mean[i]), 
                                           b = exp(ret_df$log_b_mean[i]), 
                                           c = 0,
                                           p = exp(ret_df$log_p_mean[i])))

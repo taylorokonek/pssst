@@ -18,6 +18,9 @@
 #' intervals are the ones observed in DHS: exact daily deaths before 1 month, monthly through age 24 months, yearly after.
 #' Days will be reported as 1/30th of a month. If an individual "Died on day of birth", they are
 #' interval censored from [0, 1/30]
+#' @param cmc_adjust number of months to add to the recorded month in the dataset. As an example, 
+#' the Ethiopian calendar is 92 months behind the Gregorian calendar in general, so if a DHS survey
+#' from Ethiopia is used, \code{cmc_adjust} should be set to 92. Default value is 0.
 #' @param strata a string vector containing which column in \code{df} contains the strata 
 #' information. Can be multiple columns. Defaults to "v023".
 #' @return A dataframe containing the births recode in a format that can be input to \code{surv_synthetic}. Each
@@ -49,6 +52,7 @@ format_dhs <- function(df,
                        period_boundaries, 
                        right_censor_time = NA,
                        intervals = NA,
+                       cmc_adjust = 0,
                        strata = c("v023", "v024", "v025")[1]) {
   
   max_year <- period_boundaries[length(period_boundaries)]
@@ -78,29 +82,53 @@ format_dhs <- function(df,
     df$b6 <- temp
   }
   
-  if (class(df$v025)[1] == "haven_labelled") {
-    strat <- attr(df$v025,which='labels')
-    names(strat) <- tolower(names(strat))
-    df$v025 <- ifelse(unclass(df$v025) == strat["urban"][[1]],'urban','rural')
-    df$v025 <- factor(df$v025, levels = c('urban','rural'))
+  if ("v025" %in% strata) {
+    if (class(df$v025)[1] == "haven_labelled") {
+      strat <- attr(df$v025,which='labels')
+      names(strat) <- tolower(names(strat))
+      df$v025 <- ifelse(unclass(df$v025) == strat["urban"][[1]],'urban','rural')
+      df$v025 <- factor(df$v025, levels = c('urban','rural'))
+    }
   }
-    
-  if (class(df$v023)[1] == "haven_labelled") {
-    df$v023 <- df$v023 %>% unclass()
-    df$v023 <- factor(df$v023, levels = df$v023 %>% table() %>% names(),
-                      labels = attr(df$v023, which = "labels") %>% names())
+  
+  if ("v023" %in% strata) {
+    if (class(df$v023)[1] == "haven_labelled") {
+      # check if there are any strata with no data
+      strata_names <- attr(df$v023, which = "labels") %>% names()
+      strata_names <- strata_names[strata_names != "missing"]
+      
+      # all possible strata values
+      strata_vals <- attr(df$v023, which = "labels") %>% unname()
+      
+      # strata with observations in data frame
+      df$v023 <- df$v023 %>% unclass()
+      obs_vals <- df$v023 %>% unique %>% sort()
+      which_missing <- strata_vals[!(strata_vals %in% obs_vals)]
+      
+      if (length(which_missing) > 0) {
+        df$v023 <- factor(df$v023, levels = df$v023 %>% table() %>% names(),
+                          labels = strata_names[-which_missing])
+      } else {
+        df$v023 <- factor(df$v023, levels = df$v023 %>% table() %>% names(),
+                          labels = strata_names)
+      }
+    }
   }
-    
-  if (class(df$v022)[1] == "haven_labelled") {
-    df$v022 <- df$v022 %>% unclass()
-    df$v022 <- factor(df$v022, levels = df$v022 %>% table() %>% names(),
-                      labels = attr(df$v022, which = "labels") %>% names())
+  
+  if ("v022" %in% strata) {
+    if (class(df$v022)[1] == "haven_labelled") {
+      df$v022 <- df$v022 %>% unclass()
+      df$v022 <- factor(df$v022, levels = df$v022 %>% table() %>% names(),
+                        labels = attr(df$v022, which = "labels") %>% names())
+    }
   }
-
-  if (class(df$v024)[1] == "haven_labelled") {
-    df$v024 <- df$v024 %>% unclass()
-    df$v024 <- factor(df$v024, levels = df$v024 %>% table() %>% names(),
-                          labels = attr(df$v024, which = "labels") %>% names())
+  
+  if ("v024" %in% strata) {
+    if (class(df$v024)[1] == "haven_labelled") {
+      df$v024 <- df$v024 %>% unclass()
+      df$v024 <- factor(df$v024, levels = df$v024 %>% table() %>% names(),
+                        labels = attr(df$v024, which = "labels") %>% names())
+    }
   }
   
   # call get_births
@@ -108,6 +136,7 @@ format_dhs <- function(df,
                        surveyyear = survey_year, 
                        year.cut = year_cut, 
                        strata = strata,
+                       cmc.adjust = cmc_adjust,
                        intervals = intervals)
   
   # convert things to vectors (if needed, as would be the case if data comes from rdhs)
@@ -154,7 +183,7 @@ format_dhs <- function(df,
   died_after_max <- which((!is.na(died_dates)) & (died_dates >= max_date))
   
   new_rightcensoringage <- floor(-((ym(paste(births$year_born, births$month_born, sep = "-")) - 
-                              ym(paste0(max_year,"-01")))[died_after_max]) / 30)
+                                      ym(paste0(max_year,"-01")))[died_after_max]) / 30)
   
   row_ids <- died_after_max
   # instead make them right censored
@@ -299,7 +328,7 @@ format_dhs <- function(df,
       new_t_i <- min(temp$t_i[1],max(temp$a_pi + temp$l_p))
       births[which(births$individual == uniq_indivs[i]),]$t_i <- new_t_i
       
-    # if interval-censored or exactly observed, make sure 
+      # if interval-censored or exactly observed, make sure 
     } else {
       new_t_1i <- min(temp$t_1i[1],max(temp$a_pi + temp$l_p))
       new_t_0i <- max(temp$t_0i[1], min(temp$a_pi))
