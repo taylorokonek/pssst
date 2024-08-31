@@ -49,7 +49,7 @@ Defaults to \code{TRUE}.}
 still specify a weights column, but note that the superpopulation variance will be returned
 as opposed to the finite population variance.}
 
-\item{p}{column corresponding to period ID (numeric) in \code{df}}
+\item{p}{column corresponding to period ID (must be integer-valued, numeric) in \code{df}}
 
 \item{a_pi}{column corresponding to child's age at beginning of time period in \code{df}}
 
@@ -116,11 +116,11 @@ as it is more numerically stable in some cases. Under this alternative, if
 \eqn{\gamma \sim Gamma(Q^{-2}, 1)} and \eqn{\omega = \log(Q^2 \gamma) / Q}, then \eqn{x = \exp(\mu + \sigma \omega)}
 follows the generalized gamma distribution with pdf
 
-\deqn{f(x \mid \mu, \sigma, Q) = \frac{|Q| (Q^{-2}^{Q^{-2}})}{\sigma x \Gamma(Q^{-2})} \exp(Q^{-2}(Q \omega - \exp(Q \omega)))}
+\deqn{f(x \mid \mu, \sigma, Q) = \frac{|Q| (Q^{-2})^{Q^{-2}}}{\sigma x \Gamma(Q^{-2})} \exp(Q^{-2}(Q \omega - \exp(Q \omega)))}
 
 The "etsp" distribution uses the exponentially-trunacted shifted power family of hazards defined by
 
-\deqn{h(x) = a(x + c)^{-p} e^{-b x}},
+\deqn{h(x) = a(x + c)^{-p} e^{-b x}}
 
 in Scholey (2019), but sets \eqn{c = 0}.
 }
