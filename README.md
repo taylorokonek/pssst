@@ -20,6 +20,7 @@ The package currently supports the following parametric distributions:
 * Generalized Gamma
 * Lognormal
 * Gompertz
+* Dagum
 * Log-logistic
 
 ## Installation

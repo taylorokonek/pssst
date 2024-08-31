@@ -129,6 +129,46 @@ double rcpp_f_loglogistic(double x, double shape, double scale, bool give_log) {
 
 }
 
+// [[Rcpp::export]]
+double rcpp_F_dagum(double x, double shape1, double shape2, double scale, bool lower_tail, bool give_log) {
+  double p = shape1;
+  double a = shape2;
+  double b = scale;
+  double ret_val;
+  ret_val = pow( 1 + pow(x/b, -1*a), -1*p);
+  
+  if (lower_tail) {
+    if (give_log) {
+      ret_val = log(ret_val);
+    } else {
+      ret_val = ret_val;
+    }
+  } else {
+    if (give_log) {
+      ret_val = log(1 - ret_val);
+    }  else {
+      ret_val = 1 - ret_val;
+    }
+  }
+  return(ret_val);
+}
+
+// [[Rcpp::export]]
+double rcpp_f_dagum(double x, double shape1, double shape2, double scale, bool give_log) {
+  double p = shape1;
+  double a = shape2;
+  double b = scale;
+  double ret_val;
+  ret_val = ((a*p)/x)*(pow(x/b, a*p))/ pow((pow(x/b, a) + 1), p+1);
+  if (give_log) {
+    ret_val = log(ret_val);
+  } else {
+    ret_val = ret_val;
+  }
+  return(ret_val);
+}
+
+
 
 // input shape = Q, location = omega, scale = sigma
 // [[Rcpp::export]]
@@ -175,6 +215,8 @@ public:
 // 4 = lognormal
 // 5 = Gompertz
 // 6 = ETSP: Exponentially-trunacted shifted-power
+// 7 = Log-logistic
+// 8 = Dagum
 // [[Rcpp::export]]
 double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints) {
   NumericVector scale_vec = exp(log_scale_vec);
@@ -183,7 +225,7 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
   double ret_val = 0;
   int num_true = 0;
   LogicalVector U_p_internal(breakpoints.length());
-
+  
 
   if (dist == 0 | dist == 1) {
     
@@ -295,6 +337,20 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
   double scale_param = scale_vec[0];
 
   ret_val = - rcpp_F_loglogistic(upper_bound, shape_param, scale_param, 0, 1) + rcpp_F_loglogistic(lower_bound, shape_param, scale_param, 0, 1);
+}
+  else if (dist == 8) {
+  
+  // the Dagum distribution has 3 parameters:
+  // p and a are shape parameters, b is the scale parameter
+  // p = shape1, a = shape2 
+  // for compatibility with existing data structures, 
+  // shape2 is set to be the first entry of the scale vector
+  
+  double shape1 = shape_param; 
+  double shape2 = scale_vec[0];
+  double scale = scale_vec[1];
+  
+  ret_val = - rcpp_F_dagum(upper_bound, shape1, shape2, scale, 0, 1) + rcpp_F_dagum(lower_bound, shape1, shape2, scale, 0, 1);
 
 }
 
@@ -308,6 +364,8 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
 // 3 = Generalized gamma
 // 4 = lognormal
 // 5 = Gompertz
+// 7 = Log-logistic
+// 8 = Dagum
 double rcpp_l_hazard(double x, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints) {
   NumericVector scale_vec = exp(log_scale_vec);
   NumericVector rate_param_vec = 1/scale_vec;
@@ -362,6 +420,12 @@ double rcpp_l_hazard(double x, double log_shape, NumericVector log_scale_vec, in
     denominator = rcpp_F_loglogistic(x, shape_param, scale_vec[0], 0, 1);
     ret_val = numerator - denominator;
 
+  }
+  else if (dist == 8) {
+    
+    numerator = rcpp_f_dagum(x, shape_param, scale_vec[0], scale_vec[1], 1);
+    denominator = rcpp_F_dagum(x, shape_param, scale_vec[0], scale_vec[1], 0, 1);
+    ret_val = numerator - denominator;
   }
 
   return(ret_val);
