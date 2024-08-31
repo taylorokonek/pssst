@@ -55,7 +55,7 @@
 #' at the moment.
 #' @param dist distribution. Currently supports "weibull", "exponential", 
 #' "piecewise_exponential", "gengamma", "lognormal", "gompertz", "etsp" (exponentially-truncated shifted power family),
-#' "loglogistic"
+#' "loglogistic", "dagum"
 #' @param breakpoints if distribution is "piecewise_exponential", the breakpoints (in months) where
 #' the distribution should be divided
 #' @param init_vals an optional vector of initial values at which to start the optimizer for the 
