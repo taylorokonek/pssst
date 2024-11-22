@@ -343,10 +343,9 @@ h_etsp <- function (x, a, b, c, p) {
 #' @noRd
 #' @keywords internal
 H_etsp <- function(lower, upper, a, b, c, p) {
-  ret <- integrate(h_etsp, lower, upper, a = a, b = b, c = c, p = p)
-  return(ret$value)
+  ret <- -1*a*exp(b*c)*b^(p-1)*(expint::gammainc(1-p, b*(c+upper)) - expint::gammainc(1-p, b*(c+lower)))
+  return(ret)
 }
-H_etsp <- Vectorize(H_etsp)
 
 
 

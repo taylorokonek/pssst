@@ -850,18 +850,14 @@ surv_synthetic <- function(df,
       ret_df$IMR <- NA
       ret_df$NMR <- NA
       for (i in 1:nrow(ret_df)) {
-        ret_df$U5MR[i] <- 1 - exp(-H_etsp(0, 60, a = exp(ret_df$log_a_mean[i]), 
-                                          b = exp(ret_df$log_b_mean[i]), 
-                                          c = 0,
-                                          p = exp(ret_df$log_p_mean[i])))
-        ret_df$IMR[i] <- 1 - exp(-H_etsp(0, 12, a = exp(ret_df$log_a_mean[i]), 
-                                          b = exp(ret_df$log_b_mean[i]), 
-                                          c = 0,
-                                          p = exp(ret_df$log_p_mean[i])))
-        ret_df$NMR[i] <- 1 - exp(-H_etsp(0, 1, a = exp(ret_df$log_a_mean[i]), 
-                                          b = exp(ret_df$log_b_mean[i]), 
-                                          c = 0,
-                                          p = exp(ret_df$log_p_mean[i])))
+        MR <- 1 - exp(-H_etsp(0, c(1, 12, 60),
+                               a = exp(ret_df$log_a_mean[i]), 
+                               b = exp(ret_df$log_b_mean[i]), 
+                               c = 0.0002,
+                               p = exp(ret_df$log_p_mean[i])))
+        ret_df$NMR[i] <- MR[1]
+        ret_df$IMR[i] <- MR[2]
+        ret_df$IMR[i] <- MR[3]
       }
       
     } else if (dist == 7) {
