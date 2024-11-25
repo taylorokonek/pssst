@@ -61,6 +61,7 @@
 #' @param init_vals an optional vector of initial values at which to start the optimizer for the 
 #' parameters. Must specify the appropriate number of parameters for the given distribution /
 #' number of periods.
+#' @param etsp_c If dist is etsp, fixed value to use for the c parameter. Default is zero.
 #' @return A list containing: 
 #' \itemize{
 #' \item result: a dataframe of summarized results
@@ -106,7 +107,8 @@ surv_synthetic <- function(df,
                            numerical_grad = FALSE,
                            dist = "weibull",
                            breakpoints = NA,
-                           init_vals = NA) {
+                           init_vals = NA,
+                           etsp_c = 0) {
   
   # error checking
   if (survey & is.null(weights)) {
@@ -853,7 +855,7 @@ surv_synthetic <- function(df,
         MR <- 1 - exp(-H_etsp(0, c(1, 12, 60),
                                a = exp(ret_df$log_a_mean[i]), 
                                b = exp(ret_df$log_b_mean[i]), 
-                               c = 0.0002,
+                               c = etsp_c,
                                p = exp(ret_df$log_p_mean[i])))
         ret_df$NMR[i] <- MR[1]
         ret_df$IMR[i] <- MR[2]

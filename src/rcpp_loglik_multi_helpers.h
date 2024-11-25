@@ -218,7 +218,7 @@ public:
 // 7 = Log-logistic
 // 8 = Dagum
 // [[Rcpp::export]]
-double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints) {
+double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints, double etsp_c = 0) {
   NumericVector scale_vec = exp(log_scale_vec);
   NumericVector rate_param_vec = 1/scale_vec;
   double shape_param = exp(log_shape);
@@ -326,7 +326,7 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
   // c = 0
   // p = scale_vec[1]
 
-  etsp_haz f(shape_param, scale_vec[0], 0.0002, scale_vec[1]);
+  etsp_haz f(shape_param, scale_vec[0], etsp_c, scale_vec[1]);
   double err_est;
   int err_code;
 
