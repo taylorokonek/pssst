@@ -24,7 +24,8 @@ surv_synthetic(
   numerical_grad = FALSE,
   dist = "weibull",
   breakpoints = NA,
-  init_vals = NA
+  init_vals = NA,
+  etsp_c = 0
 )
 }
 \arguments{
@@ -76,7 +77,7 @@ at the moment.}
 
 \item{dist}{distribution. Currently supports "weibull", "exponential",
 "piecewise_exponential", "gengamma", "lognormal", "gompertz", "etsp" (exponentially-truncated shifted power family),
-"loglogistic"}
+"loglogistic", "dagum"}
 
 \item{breakpoints}{if distribution is "piecewise_exponential", the breakpoints (in months) where
 the distribution should be divided}
@@ -84,6 +85,8 @@ the distribution should be divided}
 \item{init_vals}{an optional vector of initial values at which to start the optimizer for the
 parameters. Must specify the appropriate number of parameters for the given distribution /
 number of periods.}
+
+\item{etsp_c}{If dist is etsp, fixed value to use for the c parameter. Default is zero.}
 }
 \value{
 A list containing:

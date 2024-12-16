@@ -2,10 +2,18 @@
 % Please edit documentation in R/pssst-package.R
 \docType{package}
 \name{pssst}
+\alias{pssst-package}
 \alias{pssst}
 \title{pssst: Parametric Survey-weighted Survival models for Synthetic children across Time}
+\description{
+Fit parametric survival models to survey data to estimate finite-population, synthetic child mortality across multiple time periods.
+}
 \section{pssst functions}{
 
 format_dhs
 }
 
+\author{
+\strong{Maintainer}: Taylor Okonek \email{tokonek@uw.edu}
+
+}
