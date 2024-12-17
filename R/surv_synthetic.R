@@ -862,7 +862,7 @@ surv_synthetic <- function(df,
                                p = exp(ret_df$log_p_mean[i])))
         ret_df$NMR[i] <- MR[1]
         ret_df$IMR[i] <- MR[2]
-        ret_df$IMR[i] <- MR[3]
+        ret_df$U5MR[i] <- MR[3]
       }
       
     } else if (dist == 7) {
