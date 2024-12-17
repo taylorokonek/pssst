@@ -6,13 +6,14 @@
 #' @param shape_par_ids which pars are shape parameters
 #' @param dist integer denoting which distribution to use
 #' @param num_periods number of periods in dataframe
+#' @param etsp_c if dist is etsp, fixed value to use for the c parameter. Default is zero.
 #' @return negative log likelihood
 #' 
 #' @author Taylor Okonek
 #' @noRd
 #' @keywords internal
 optim_fn <- function(par, data, weights, shape_par_ids, dist, breakpoints,
-                     num_periods) {
+                     num_periods, etsp_c = 0) {
   # weibull
   if (dist == 1) {
     pars_per_period <- length(par[-shape_par_ids]) / num_periods
@@ -78,7 +79,8 @@ optim_fn <- function(par, data, weights, shape_par_ids, dist, breakpoints,
                            log_scales = par[-shape_par_ids], 
                            dist = dist,
                            breakpoints = breakpoints,
-                           par_period_id = par_period_id) 
+                           par_period_id = par_period_id,
+                           etsp_c = etsp_c) 
     ret <- -sum(a * weights)
 
   } 
@@ -93,13 +95,14 @@ optim_fn <- function(par, data, weights, shape_par_ids, dist, breakpoints,
 #' @param shape_par_ids which pars are shape parameters
 #' @param dist integer denoting which distribution to use
 #' @param num_periods numer of periods in dataframe
+#' @param etsp_c if dist is etsp, fixed value to use for the c parameter. Default is zero.
 #' @return negative log likelihood
 #' 
 #' @author Taylor Okonek
 #' @noRd
 #' @keywords internal
 optim_fn_grad <- function(par, data, weights, shape_par_ids, dist,
-                          num_periods, breakpoints) {
+                          num_periods, breakpoints, etsp_c = 0) {
   if (dist == 1) {
     pars_per_period <- length(par[-shape_par_ids]) / num_periods
     par_period_id <- rep(1:num_periods, each = pars_per_period)
@@ -155,7 +158,8 @@ optim_fn_grad <- function(par, data, weights, shape_par_ids, dist,
                                log_scales = par[-shape_par_ids], 
                                dist = dist,
                                breakpoints = breakpoints,
-                               par_period_id = par_period_id) * weights)
+                               par_period_id = par_period_id,
+                               etsp_c = etsp_c) * weights)
     
   }
   return(a)

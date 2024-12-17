@@ -315,7 +315,8 @@ surv_synthetic <- function(df,
                                             shape_par_ids = 1,
                                             dist = dist,
                                             breakpoints = breakpoints,
-                                            num_periods = n_periods)
+                                            num_periods = n_periods,
+                                            etsp_c = etsp_c)
         }
       } else {
         test_scores <- rcpp_gradient_multi(x_df = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
@@ -589,7 +590,8 @@ surv_synthetic <- function(df,
                          breakpoints = breakpoints,
                          num_periods = n_periods,
                          method = "BFGS",
-                         hessian = TRUE)
+                         hessian = TRUE,
+                         etsp_c = etsp_c)
       end_time <- Sys.time()
       end_time - start_time
       
@@ -605,7 +607,8 @@ surv_synthetic <- function(df,
                                             shape_par_ids = 1:n_periods,
                                             dist = dist,
                                             breakpoints = breakpoints,
-                                            num_periods = n_periods)
+                                            num_periods = n_periods,
+                                            etsp_c = etsp_c)
         }
       }
       
