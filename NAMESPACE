@@ -2,7 +2,6 @@
 
 export(format_dhs)
 export(format_turnbull)
-export(get_CIs)
 export(surv_synthetic)
 export(turnbull)
 importFrom(Rcpp,sourceCpp)
