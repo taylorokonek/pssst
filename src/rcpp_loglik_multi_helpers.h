@@ -294,10 +294,11 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
     LogicalVector relevant_pars = (lower_bound < breakpoints_intervals_upper) & (upper_bound > breakpoints_intervals_lower);
 
     // add up appropriate hazards
+    NumericVector rate_param_vec_cumulative = cumsum(rate_param_vec);
     int diff_counter = 0;
     for (int i = 0; i < rate_param_vec.length(); i++) {
       if (relevant_pars[i]) {
-        ret_val += rate_param_vec[i] * diffs[diff_counter];
+        ret_val += rate_param_vec_cumulative[i] * diffs[diff_counter];
         diff_counter += 1;
       }
     }
