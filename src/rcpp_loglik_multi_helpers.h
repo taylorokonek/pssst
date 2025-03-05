@@ -295,6 +295,7 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
 
     // add up appropriate hazards
     NumericVector rate_param_vec_cumulative = cumsum(rate_param_vec);
+    std::reverse(rate_param_vec_cumulative.begin(), rate_param_vec_cumulative.end());
     int diff_counter = 0;
     for (int i = 0; i < rate_param_vec.length(); i++) {
       if (relevant_pars[i]) {
