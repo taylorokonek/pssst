@@ -61,6 +61,7 @@
 #' @param init_vals an optional vector of initial values at which to start the optimizer for the 
 #' parameters. Must specify the appropriate number of parameters for the given distribution /
 #' number of periods.
+#' @param etsp_c If dist is etsp, fixed value to use for the c parameter. Default is zero.
 #' @return A list containing: 
 #' \itemize{
 #' \item result: a dataframe of summarized results
@@ -106,7 +107,8 @@ surv_synthetic <- function(df,
                            numerical_grad = FALSE,
                            dist = "weibull",
                            breakpoints = NA,
-                           init_vals = NA) {
+                           init_vals = NA,
+                           etsp_c = 0) {
   
   # error checking
   if (survey & is.null(weights)) {
@@ -313,7 +315,8 @@ surv_synthetic <- function(df,
                                             shape_par_ids = 1,
                                             dist = dist,
                                             breakpoints = breakpoints,
-                                            num_periods = n_periods)
+                                            num_periods = n_periods,
+                                            etsp_c = etsp_c)
         }
       } else {
         test_scores <- rcpp_gradient_multi(x_df = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
@@ -587,7 +590,8 @@ surv_synthetic <- function(df,
                          breakpoints = breakpoints,
                          num_periods = n_periods,
                          method = "BFGS",
-                         hessian = TRUE)
+                         hessian = TRUE,
+                         etsp_c = etsp_c)
       end_time <- Sys.time()
       end_time - start_time
       
@@ -603,7 +607,8 @@ surv_synthetic <- function(df,
                                             shape_par_ids = 1:n_periods,
                                             dist = dist,
                                             breakpoints = breakpoints,
-                                            num_periods = n_periods)
+                                            num_periods = n_periods,
+                                            etsp_c = etsp_c)
         }
       }
       
@@ -850,18 +855,14 @@ surv_synthetic <- function(df,
       ret_df$IMR <- NA
       ret_df$NMR <- NA
       for (i in 1:nrow(ret_df)) {
-        ret_df$U5MR[i] <- 1 - exp(-H_etsp(0, 60, a = exp(ret_df$log_a_mean[i]), 
-                                          b = exp(ret_df$log_b_mean[i]), 
-                                          c = 0,
-                                          p = exp(ret_df$log_p_mean[i])))
-        ret_df$IMR[i] <- 1 - exp(-H_etsp(0, 12, a = exp(ret_df$log_a_mean[i]), 
-                                          b = exp(ret_df$log_b_mean[i]), 
-                                          c = 0,
-                                          p = exp(ret_df$log_p_mean[i])))
-        ret_df$NMR[i] <- 1 - exp(-H_etsp(0, 1, a = exp(ret_df$log_a_mean[i]), 
-                                          b = exp(ret_df$log_b_mean[i]), 
-                                          c = 0,
-                                          p = exp(ret_df$log_p_mean[i])))
+        MR <- 1 - exp(-H_etsp(0, c(1, 12, 60),
+                               a = exp(ret_df$log_a_mean[i]), 
+                               b = exp(ret_df$log_b_mean[i]), 
+                               c = etsp_c,
+                               p = exp(ret_df$log_p_mean[i])))
+        ret_df$NMR[i] <- MR[1]
+        ret_df$IMR[i] <- MR[2]
+        ret_df$U5MR[i] <- MR[3]
       }
       
     } else if (dist == 7) {

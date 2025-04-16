@@ -53,8 +53,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // rcpp_loglik_multi
-NumericVector rcpp_loglik_multi(DataFrame x_df, int num_periods, NumericVector log_shapes, NumericVector log_scales, int dist, NumericVector breakpoints, NumericVector par_period_id);
-RcppExport SEXP _pssst_rcpp_loglik_multi(SEXP x_dfSEXP, SEXP num_periodsSEXP, SEXP log_shapesSEXP, SEXP log_scalesSEXP, SEXP distSEXP, SEXP breakpointsSEXP, SEXP par_period_idSEXP) {
+NumericVector rcpp_loglik_multi(DataFrame x_df, int num_periods, NumericVector log_shapes, NumericVector log_scales, int dist, NumericVector breakpoints, NumericVector par_period_id, double etsp_c);
+RcppExport SEXP _pssst_rcpp_loglik_multi(SEXP x_dfSEXP, SEXP num_periodsSEXP, SEXP log_shapesSEXP, SEXP log_scalesSEXP, SEXP distSEXP, SEXP breakpointsSEXP, SEXP par_period_idSEXP, SEXP etsp_cSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -65,7 +65,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type dist(distSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type breakpoints(breakpointsSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type par_period_id(par_period_idSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcpp_loglik_multi(x_df, num_periods, log_shapes, log_scales, dist, breakpoints, par_period_id));
+    Rcpp::traits::input_parameter< double >::type etsp_c(etsp_cSEXP);
+    rcpp_result_gen = Rcpp::wrap(rcpp_loglik_multi(x_df, num_periods, log_shapes, log_scales, dist, breakpoints, par_period_id, etsp_c));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -190,8 +191,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // rcpp_hazard_integral
-double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints);
-RcppExport SEXP _pssst_rcpp_hazard_integral(SEXP lower_boundSEXP, SEXP upper_boundSEXP, SEXP log_shapeSEXP, SEXP log_scale_vecSEXP, SEXP distSEXP, SEXP breakpointsSEXP) {
+double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints, double etsp_c);
+RcppExport SEXP _pssst_rcpp_hazard_integral(SEXP lower_boundSEXP, SEXP upper_boundSEXP, SEXP log_shapeSEXP, SEXP log_scale_vecSEXP, SEXP distSEXP, SEXP breakpointsSEXP, SEXP etsp_cSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -201,7 +202,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type log_scale_vec(log_scale_vecSEXP);
     Rcpp::traits::input_parameter< int >::type dist(distSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type breakpoints(breakpointsSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcpp_hazard_integral(lower_bound, upper_bound, log_shape, log_scale_vec, dist, breakpoints));
+    Rcpp::traits::input_parameter< double >::type etsp_c(etsp_cSEXP);
+    rcpp_result_gen = Rcpp::wrap(rcpp_hazard_integral(lower_bound, upper_bound, log_shape, log_scale_vec, dist, breakpoints, etsp_c));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -228,7 +230,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_pssst_rcpp_expand_surv", (DL_FUNC) &_pssst_rcpp_expand_surv, 4},
     {"_pssst_rcpp_expand_surv_helper", (DL_FUNC) &_pssst_rcpp_expand_surv_helper, 3},
     {"_pssst_rcpp_gradient_multi", (DL_FUNC) &_pssst_rcpp_gradient_multi, 4},
-    {"_pssst_rcpp_loglik_multi", (DL_FUNC) &_pssst_rcpp_loglik_multi, 7},
+    {"_pssst_rcpp_loglik_multi", (DL_FUNC) &_pssst_rcpp_loglik_multi, 8},
     {"_pssst_rcpp_F_gengamma", (DL_FUNC) &_pssst_rcpp_F_gengamma, 6},
     {"_pssst_rcpp_f_gengamma", (DL_FUNC) &_pssst_rcpp_f_gengamma, 5},
     {"_pssst_rcpp_F_gompertz", (DL_FUNC) &_pssst_rcpp_F_gompertz, 5},
@@ -237,7 +239,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_pssst_rcpp_F_dagum", (DL_FUNC) &_pssst_rcpp_F_dagum, 6},
     {"_pssst_rcpp_f_dagum", (DL_FUNC) &_pssst_rcpp_f_dagum, 5},
     {"_pssst_rcpp_f_gompertz", (DL_FUNC) &_pssst_rcpp_f_gompertz, 4},
-    {"_pssst_rcpp_hazard_integral", (DL_FUNC) &_pssst_rcpp_hazard_integral, 6},
+    {"_pssst_rcpp_hazard_integral", (DL_FUNC) &_pssst_rcpp_hazard_integral, 7},
     {"_pssst_rcpp_turnbull", (DL_FUNC) &_pssst_rcpp_turnbull, 8},
     {NULL, NULL, 0}
 };

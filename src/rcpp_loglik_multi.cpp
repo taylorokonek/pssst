@@ -45,7 +45,7 @@ using namespace Rcpp;
 // p_vec: time period id
 
 // [[Rcpp::export]]
-NumericVector rcpp_loglik_multi(DataFrame x_df, int num_periods, NumericVector log_shapes, NumericVector log_scales, int dist, NumericVector breakpoints, NumericVector par_period_id) {
+NumericVector rcpp_loglik_multi(DataFrame x_df, int num_periods, NumericVector log_shapes, NumericVector log_scales, int dist, NumericVector breakpoints, NumericVector par_period_id, double etsp_c = 0) {
 
   // Convert dataframe to matrix
   NumericMatrix x = testDFtoNM1(x_df);
@@ -110,7 +110,7 @@ NumericVector rcpp_loglik_multi(DataFrame x_df, int num_periods, NumericVector l
               which_vals_counter += 1;
             } 
           }
-          H_i += rcpp_hazard_integral(std::max(a_pi[j], 0.0), std::min(x(i, 2), a_pi[j] + l_p[j]), log_shape_internal[j], which_vals, dist, breakpoints);
+          H_i += rcpp_hazard_integral(std::max(a_pi[j], 0.0), std::min(x(i, 2), a_pi[j] + l_p[j]), log_shape_internal[j], which_vals, dist, breakpoints, etsp_c);
           // Rcout << "cumulative hazard, right-censored : " << H_i << "\n";
           
         }
@@ -138,7 +138,7 @@ NumericVector rcpp_loglik_multi(DataFrame x_df, int num_periods, NumericVector l
             } 
           }
           //Rcout << "inputs t0: " <<  std::max(a_pi[j], 0.0) << "," << std::min(x(i, 3), a_pi[j] + l_p[j]) << ", ";
-          H_i0 += rcpp_hazard_integral(std::max(a_pi[j], 0.0), std::min(x(i, 3), a_pi[j] + l_p[j]), log_shape_internal[j], which_vals, dist, breakpoints);
+          H_i0 += rcpp_hazard_integral(std::max(a_pi[j], 0.0), std::min(x(i, 3), a_pi[j] + l_p[j]), log_shape_internal[j], which_vals, dist, breakpoints, etsp_c);
          // Rcout << "t0 cumulative hazard, interval-censored : " << H_i0 << "\n";
           
         }
@@ -160,7 +160,7 @@ NumericVector rcpp_loglik_multi(DataFrame x_df, int num_periods, NumericVector l
             } 
           }
           //Rcout << "inputs t1: " <<  std::max(a_pi[j], 0.0) << "," << std::min(x(i, 4), a_pi[j] + l_p[j]) << ", logshape=" << log_shape_internal[j] << "whichvals=" << which_vals;
-          H_i1 += rcpp_hazard_integral(std::max(a_pi[j], 0.0), std::min(x(i, 4), a_pi[j] + l_p[j]), log_shape_internal[j], which_vals, dist, breakpoints);
+          H_i1 += rcpp_hazard_integral(std::max(a_pi[j], 0.0), std::min(x(i, 4), a_pi[j] + l_p[j]), log_shape_internal[j], which_vals, dist, breakpoints, etsp_c);
           //Rcout << "t1 cumulative hazard, interval-censored: " << H_i1 << "\n";
         }
       }
@@ -185,7 +185,7 @@ NumericVector rcpp_loglik_multi(DataFrame x_df, int num_periods, NumericVector l
               which_vals_counter += 1;
             } 
           }
-          H_i += rcpp_hazard_integral(std::max(a_pi[j], 0.0), std::min(x(i, 3), a_pi[j] + l_p[j]), log_shape_internal[j], which_vals, dist, breakpoints);
+          H_i += rcpp_hazard_integral(std::max(a_pi[j], 0.0), std::min(x(i, 3), a_pi[j] + l_p[j]), log_shape_internal[j], which_vals, dist, breakpoints, etsp_c);
         }
       }
 

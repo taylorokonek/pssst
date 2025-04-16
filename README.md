@@ -22,6 +22,7 @@ The package currently supports the following parametric distributions:
 * Gompertz
 * Dagum
 * Log-logistic
+* Exponentially-truncated shifted power family
 
 ## Installation
 
