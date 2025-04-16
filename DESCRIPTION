@@ -26,7 +26,8 @@ Imports:
     dplyr,
     survey,
     numDeriv,
-    RcppNumerical
+    RcppNumerical,
+    expint
 LinkingTo: 
     Rcpp,
     RcppEigen,
