@@ -276,6 +276,7 @@ format_dhs <- function(df,
   
   if (length(which_remove) > 0) {
     exact_rows <- exact_rows[-which_remove]
+    daily_births <- daily_births[-which_remove]
   }
   
   # replace t0 and t1 in dataframe with daily_births
