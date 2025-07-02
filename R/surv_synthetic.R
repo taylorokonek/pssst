@@ -270,11 +270,14 @@ surv_synthetic <- function(df,
                        names_from = p,
                        values_from = c(a_pi, l_p))
   
+  # get unique combinations of relevant variables, and collapse
+  collapsed_df <- df %>% 
+    dplyr::count(dplyr::select(.,-individual, -household, -cluster, -strata))
+  
   # get column name indicators for a_pi and l_p
   a_pi_cols <- paste0("a_pi_",period_names)
   l_p_cols <- paste0("l_p_",period_names)
 
- 
   
   # if no survey design and weights column unspecified, set weights = 1 for all individuals
   if (!survey & is.null(weights)) {
@@ -292,8 +295,8 @@ surv_synthetic <- function(df,
     start_time <- Sys.time()
     optim_res <- optim(par = init_vals,
                        fn = optim_fn,
-                       data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
-                       weights = df$weights,
+                       data = collapsed_df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols, "n")] %>% as.data.frame(),
+                       weights = collapsed_df$weights,
                        shape_par_ids = 1,
                        dist = dist,
                        breakpoints = breakpoints,
@@ -301,7 +304,6 @@ surv_synthetic <- function(df,
                        method = "BFGS",
                        hessian = TRUE)
     end_time <- Sys.time()
-    end_time - start_time
     
     if (survey) {
       message("computing finite population variance")
@@ -339,8 +341,8 @@ surv_synthetic <- function(df,
       start_time <- Sys.time()
       optim_res <- optim(par = init_vals,
                          fn = optim_fn,
-                         data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
-                         weights = df$weights,
+                         data = collapsed_df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols, "n")] %>% as.data.frame(),
+                         weights = collapsed_df$weights,
                          shape_par_ids = 1:n_periods,
                          dist = dist,
                          breakpoints = breakpoints,
@@ -348,10 +350,10 @@ surv_synthetic <- function(df,
                          method = "BFGS",
                          hessian = TRUE)
       end_time <- Sys.time()
-      end_time - start_time
       
       if (survey) {
         message("computing finite population variance")
+        message("proof it's the new one")
         if (numerical_grad) {
           test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
           for (i in 1:nrow(df)) {
@@ -384,8 +386,8 @@ surv_synthetic <- function(df,
       start_time <- Sys.time()
       optim_res <- optim(par = init_vals,
                          fn = optim_fn,
-                         data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
-                         weights = df$weights,
+                         data = collapsed_df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols,"n")] %>% as.data.frame(),
+                         weights = collapsed_df$weights,
                          shape_par_ids = NA,
                          dist = dist,
                          breakpoints = breakpoints,
@@ -393,7 +395,6 @@ surv_synthetic <- function(df,
                          method = "BFGS",
                          hessian = TRUE)
       end_time <- Sys.time()
-      end_time - start_time
       
       if (survey) {
         message("computing finite population variance")
@@ -430,8 +431,8 @@ surv_synthetic <- function(df,
       start_time <- Sys.time()
       optim_res <- optim(par = init_vals,
                          fn = optim_fn,
-                         data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
-                         weights = df$weights,
+                         data = collapsed_df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols,"n")] %>% as.data.frame(),
+                         weights = collapsed_df$weights,
                          shape_par_ids = NA,
                          dist = dist,
                          breakpoints = breakpoints,
@@ -439,7 +440,6 @@ surv_synthetic <- function(df,
                          method = "BFGS",
                          hessian = TRUE)
       end_time <- Sys.time()
-      end_time - start_time
       
       if (survey) {
         message("computing finite population variance")
@@ -468,8 +468,8 @@ surv_synthetic <- function(df,
       start_time <- Sys.time()
       optim_res <- optim(par = init_vals,
                          fn = optim_fn,
-                         data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
-                         weights = df$weights,
+                         data = collapsed_df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols,"n")] %>% as.data.frame(),
+                         weights = collapsed_df$weights,
                          shape_par_ids = 1:n_periods,
                          dist = dist,
                          breakpoints = breakpoints,
@@ -477,7 +477,6 @@ surv_synthetic <- function(df,
                          method = "BFGS",
                          hessian = TRUE)
       end_time <- Sys.time()
-      end_time - start_time
       
       if (survey) {
         message("computing finite population variance")
@@ -506,17 +505,15 @@ surv_synthetic <- function(df,
       start_time <- Sys.time()
       optim_res <- optim(par = init_vals,
                          fn = optim_fn,
-                         data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
-                         weights = df$weights,
+                         data = collapsed_df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols,"n")] %>% as.data.frame(),
+                         weights = collapsed_df$weights,
                          shape_par_ids = 1:n_periods,
                          dist = dist,
                          breakpoints = breakpoints,
                          num_periods = n_periods,
                          method = "BFGS",
                          hessian = TRUE)
-      # glimpse(optim_res)
       end_time <- Sys.time()
-      end_time - start_time
       
       if (survey) {
         message("computing finite population variance")
@@ -545,8 +542,8 @@ surv_synthetic <- function(df,
       start_time <- Sys.time()
       optim_res <- optim(par = init_vals,
                          fn = optim_fn,
-                         data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
-                         weights = df$weights,
+                         data = collapsed_df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols,"n")] %>% as.data.frame(),
+                         weights = collapsed_df$weights,
                          shape_par_ids = 1:n_periods,
                          dist = dist,
                          breakpoints = breakpoints,
@@ -554,7 +551,6 @@ surv_synthetic <- function(df,
                          method = "BFGS",
                          hessian = TRUE)
       end_time <- Sys.time()
-      end_time - start_time
       
       if (survey) {
         message("computing finite population variance")
@@ -583,8 +579,8 @@ surv_synthetic <- function(df,
       start_time <- Sys.time()
       optim_res <- optim(par = init_vals,
                          fn = optim_fn,
-                         data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
-                         weights = df$weights,
+                         data = collapsed_df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols,"n")] %>% as.data.frame(),
+                         weights = collapsed_df$weights,
                          shape_par_ids = 1:n_periods,
                          dist = dist,
                          breakpoints = breakpoints,
@@ -593,7 +589,6 @@ surv_synthetic <- function(df,
                          hessian = TRUE,
                          etsp_c = etsp_c)
       end_time <- Sys.time()
-      end_time - start_time
       
       if (survey) {
         message("computing finite population variance")
@@ -623,8 +618,8 @@ surv_synthetic <- function(df,
       start_time <- Sys.time()
       optim_res <- optim(par = init_vals,
                          fn = optim_fn,
-                         data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
-                         weights = df$weights,
+                         data = collapsed_df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols,"n")] %>% as.data.frame(),
+                         weights = collapsed_df$weights,
                          shape_par_ids = 1:n_periods,
                          dist = dist,
                          breakpoints = breakpoints,
@@ -632,7 +627,6 @@ surv_synthetic <- function(df,
                          method = "BFGS",
                          hessian = TRUE)
       end_time <- Sys.time()
-      end_time - start_time
       
       if (survey) {
         message("computing finite population variance")
@@ -659,17 +653,15 @@ surv_synthetic <- function(df,
     start_time <- Sys.time()
     optim_res <- optim(par = init_vals,
                        fn = optim_fn,
-                       data = df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)] %>% as.data.frame(),
-                       weights = df$weights,
+                       data = collapsed_df[,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols,"n")] %>% as.data.frame(),
+                       weights = collapsed_df$weights,
                        shape_par_ids = 1:n_periods,
-                       # shape_par_ids = 1:n_periods,
                        dist = dist,
                        breakpoints = breakpoints,
                        num_periods = n_periods,
                        method = "BFGS",
                        hessian = TRUE)
     end_time <- Sys.time()
-    end_time - start_time
     
     if (survey) {
       message("computing finite population variance")
