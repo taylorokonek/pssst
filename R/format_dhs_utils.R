@@ -21,6 +21,7 @@ get_births <- function(dat,
                 "v001", "v002", "v004", "v005", "v021", "v022", "v023", 
                 "v024", "v025", "v139", "bidx")
   dob <- "b3"
+  
   alive <- "b5"
   age <- "b7"
   exact_age <- "b6"
@@ -28,6 +29,12 @@ get_births <- function(dat,
   # cmc.adjust <- 0
   date.interview <- "v008"
   month.cut <- c(seq(1,24), seq(36,12*100, by = 12))
+  
+  # DHS I is missing v021 (psu), v022 (strata), v023 (other strata variable), v024 (de facto region of residence),
+  # v025 (de facto type of place of residence, i.e. urban/rural), v139 (de jure region of usual residence)
+  # -- these columns aren't critical, so just add as NA
+  missing_cols <- setdiff(c("v021", "v022", "v023", "v024", "v025", "v139"), names(dat))
+  dat[missing_cols] <- NA
   
   # extra interval censoring, if specified
   if (!is.na(intervals[1])) {
