@@ -21,7 +21,6 @@ get_births <- function(dat,
                 "v001", "v002", "v004", "v005", "v021", "v022", "v023", 
                 "v024", "v025", "v139", "bidx")
   dob <- "b3"
-  
   alive <- "b5"
   age <- "b7"
   exact_age <- "b6"
