@@ -265,14 +265,17 @@ surv_synthetic <- function(df,
   }
   
   # pivot wider
+  id_cols <- c("individual", c("household", "cluster","strata","weights")[which(survey_cols_include)],
+               "I_i", "A_i", "t_i", "t_0i", "t_1i")
   df <- df %>%
-    tidyr::pivot_wider(id_cols = c(individual, household, cluster, strata, weights, I_i, A_i, t_i, t_0i, t_1i),
+    tidyr::pivot_wider(id_cols = all_of(id_cols),
                        names_from = p,
                        values_from = c(a_pi, l_p))
   
   # get unique combinations of relevant variables, and collapse
+  collapse_cols <- intersect(c("individual", "household", "cluster", "strata"), names(df))
   collapsed_df <- df %>% 
-    dplyr::count(dplyr::select(.,-individual, -household, -cluster, -strata))
+    dplyr::count(dplyr::select(.,-any_of(collapse_cols)))
   
   # get column name indicators for a_pi and l_p
   a_pi_cols <- paste0("a_pi_",period_names)

@@ -29,6 +29,18 @@ get_births <- function(dat,
   date.interview <- "v008"
   month.cut <- c(seq(1,24), seq(36,12*100, by = 12))
   
+  # DHS I is missing v021 (psu), v022 (strata), v023 (other strata variable), v024 (de facto region of residence),
+  # v025 (de facto type of place of residence, i.e. urban/rural), v139 (de jure region of usual residence)
+  # -- these columns aren't critical, so just add as NA
+  missing_cols <- setdiff(c("v021", "v022", "v023", "v024", "v025", "v139"), names(dat))
+  dat[missing_cols] <- NA
+  
+  # if strata is NULL or NA, add empty column
+  if (is.null(strata) || all(is.na(strata))) {
+    dat$strata <- NA
+    strata <- "strata"
+  }
+  
   # extra interval censoring, if specified
   if (!is.na(intervals[1])) {
     seq_remove <- c()
