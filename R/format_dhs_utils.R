@@ -35,6 +35,12 @@ get_births <- function(dat,
   missing_cols <- setdiff(c("v021", "v022", "v023", "v024", "v025", "v139"), names(dat))
   dat[missing_cols] <- NA
   
+  # if strata is NULL or NA, add empty column
+  if (is.null(strata) || all(is.na(strata))) {
+    dat$strata <- NA
+    strata <- "strata"
+  }
+  
   # extra interval censoring, if specified
   if (!is.na(intervals[1])) {
     seq_remove <- c()
