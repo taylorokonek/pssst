@@ -222,6 +222,9 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
   NumericVector scale_vec = exp(log_scale_vec);
   NumericVector rate_param_vec = 1/scale_vec;
   double shape_param = exp(log_shape);
+  if (dist == 7) {
+    shape_param = exp(-1*exp(log_shape)); // special transformation for log-logistic to constrain non-increasing hazard
+  }
   double ret_val = 0;
   int num_true = 0;
   LogicalVector U_p_internal(breakpoints.length());

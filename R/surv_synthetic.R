@@ -876,9 +876,9 @@ surv_synthetic <- function(df,
       ret_df$NMR <- NA
       ret_df$IMR <- NA
       for (i in 1:nrow(ret_df)) {
-        ret_df$U5MR[i] <- rcpp_F_loglogistic(60, shape = exp(ret_df$log_shape_mean[i]), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
-        ret_df$NMR[i] <- rcpp_F_loglogistic(1, shape = exp(ret_df$log_shape_mean[i]), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
-        ret_df$IMR[i] <- rcpp_F_loglogistic(12, shape = exp(ret_df$log_shape_mean[i]), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
+        ret_df$U5MR[i] <- rcpp_F_loglogistic(60, shape = exp(-1*exp(ret_df$log_shape_mean[i])), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
+        ret_df$NMR[i] <- rcpp_F_loglogistic(1, shape = exp(-1*exp(ret_df$log_shape_mean[i])), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
+        ret_df$IMR[i] <- rcpp_F_loglogistic(12, shape = exp(-1*exp(ret_df$log_shape_mean[i])), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
       }
     }
     else if (dist == 8) {
