@@ -223,7 +223,7 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
   NumericVector rate_param_vec = 1/scale_vec;
   double shape_param = exp(log_shape);
   if (dist == 7) {
-    shape_param = exp(-1*exp(log_shape)); // special transformation for log-logistic to constrain non-increasing hazard
+    shape_param = exp(log_shape)/(1+exp(log_shape)); // logit instead of log transformation for log-logistic to constrain non-increasing hazard
   }
   double ret_val = 0;
   int num_true = 0;
