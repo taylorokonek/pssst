@@ -222,6 +222,9 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
   NumericVector scale_vec = exp(log_scale_vec);
   NumericVector rate_param_vec = 1/scale_vec;
   double shape_param = exp(log_shape);
+  if (dist == 7) {
+    shape_param = exp(log_shape)/(1+exp(log_shape)); // logit instead of log transformation for log-logistic to constrain non-increasing hazard
+  }
   double ret_val = 0;
   int num_true = 0;
   LogicalVector U_p_internal(breakpoints.length());
@@ -294,10 +297,12 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
     LogicalVector relevant_pars = (lower_bound < breakpoints_intervals_upper) & (upper_bound > breakpoints_intervals_lower);
 
     // add up appropriate hazards
+    NumericVector rate_param_vec_cumulative = cumsum(rate_param_vec);
+    std::reverse(rate_param_vec_cumulative.begin(), rate_param_vec_cumulative.end());
     int diff_counter = 0;
     for (int i = 0; i < rate_param_vec.length(); i++) {
       if (relevant_pars[i]) {
-        ret_val += rate_param_vec[i] * diffs[diff_counter];
+        ret_val += rate_param_vec_cumulative[i] * diffs[diff_counter];
         diff_counter += 1;
       }
     }
@@ -370,6 +375,9 @@ double rcpp_l_hazard(double x, double log_shape, NumericVector log_scale_vec, in
   NumericVector scale_vec = exp(log_scale_vec);
   NumericVector rate_param_vec = 1/scale_vec;
   double shape_param = exp(log_shape);
+  if (dist == 7) {
+    shape_param = exp(log_shape)/(1+exp(log_shape)); // logit instead of log transformation for log-logistic to constrain non-increasing hazard
+  }
   double ret_val = 0;
   double numerator, denominator;
 
