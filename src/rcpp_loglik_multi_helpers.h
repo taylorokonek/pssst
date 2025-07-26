@@ -375,6 +375,9 @@ double rcpp_l_hazard(double x, double log_shape, NumericVector log_scale_vec, in
   NumericVector scale_vec = exp(log_scale_vec);
   NumericVector rate_param_vec = 1/scale_vec;
   double shape_param = exp(log_shape);
+  if (dist == 7) {
+    shape_param = exp(log_shape)/(1+exp(log_shape)); // logit instead of log transformation for log-logistic to constrain non-increasing hazard
+  }
   double ret_val = 0;
   double numerator, denominator;
 
