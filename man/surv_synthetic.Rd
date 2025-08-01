@@ -77,16 +77,16 @@ at the moment.}
 
 \item{dist}{distribution. Currently supports "weibull", "exponential",
 "piecewise_exponential", "gengamma", "lognormal", "gompertz", "etsp" (exponentially-truncated shifted power family),
-"loglogistic", "dagum"}
+"loglogistic", "dagum". The loglogistic and piecewise exponential distributions are constrained
+to have a monotonically non-increasing hazard. See Details for more.}
 
 \item{breakpoints}{if distribution is "piecewise_exponential", the breakpoints (in months) where
-the distribution should be divided}
+the distribution should be divided. For example, to have three distinct age groups [0,1), [1,12), [12,\eqn{\infty}),
+set breakpoints = c(0,1,12), or breakpoints = c(1,12).}
 
 \item{init_vals}{an optional vector of initial values at which to start the optimizer for the
 parameters. Must specify the appropriate number of parameters for the given distribution /
 number of periods.}
-
-\item{etsp_c}{If dist is etsp, fixed value to use for the c parameter. Default is zero.}
 }
 \value{
 A list containing:
@@ -106,26 +106,7 @@ Fits a parametric survival model to DHS data (formatted from \code{format_dhs}) 
 parameter estimates and finite population variances for parametric survival curves in each time period.
 }
 \details{
-We use the same parameterization of the generalized gamma distribution
-as used in \code{\link{flexsurv}}, as opposed to the original parameterization
-described in Stacy 1962, where if \eqn{\omega \sim Gamma(k, 1)}, then \eqn{x = \exp(\omega / shape + \log(scale))}
-follows the original generalized gamma distribution. With \eqn{shape = b > 0} and \eqn{scale = a > 0}, \eqn{x}
-has the pdf
 
-\deqn{f(x \mid a, b, k) = \frac{b}{\Gamma(k)} \frac{x^{bk - 1}}{a^{bk}} \exp(-(x/a)^b)}
-
-The alternative parameterization developed in Prentice (1974) is typically preferred,
-as it is more numerically stable in some cases. Under this alternative, if
-\eqn{\gamma \sim Gamma(Q^{-2}, 1)} and \eqn{\omega = \log(Q^2 \gamma) / Q}, then \eqn{x = \exp(\mu + \sigma \omega)}
-follows the generalized gamma distribution with pdf
-
-\deqn{f(x \mid \mu, \sigma, Q) = \frac{|Q| (Q^{-2})^{Q^{-2}}}{\sigma x \Gamma(Q^{-2})} \exp(Q^{-2}(Q \omega - \exp(Q \omega)))}
-
-The "etsp" distribution uses the exponentially-trunacted shifted power family of hazards defined by
-
-\deqn{h(x) = a(x + c)^{-p} e^{-b x}}
-
-in Scholey (2019), but sets \eqn{c = 0}.
 }
 \references{
 Stacy, E. W. (1962). A generalization of the gamma

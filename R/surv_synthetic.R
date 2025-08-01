@@ -24,6 +24,16 @@
 #' 
 #' in Scholey (2019), but sets \eqn{c = 0}.
 #' 
+#' The log-logistic and piecewise exponential distributions are constrained to have a 
+#' monotonically non-increasing hazard. In practice, the only difference from the typical 
+#' log-logistic distribution is that the shape parameter is constrained to lie within (0,1] 
+#' rather than (0, \eqn{\infty}). For the piecewise exponential, rate parameters have the same support
+#' as a typically parameterized piecewise exponential, but the distribution is such that the hazard 
+#' is a reverse cumulative sum of rate parameters. For example, if we have three age groups, x < 1, 
+#' 1 < x < 12, and 12 < x, the hazard function is given by
+#' 
+#' \deqn{h(x) = (\beta_0 + \beta+1 + \beta_2) I[x < 1] + (\beta_0 + \beta+1) I[1 < x < 12] + (\beta_0) I[12 < x]
+#' 
 #' @param df a dataframe containing the output from \code{format_dhs}, or optionally, dataframe
 #' containing the following columns
 #' @param individual column corresponding to individual ID in \code{df}
@@ -55,13 +65,14 @@
 #' at the moment.
 #' @param dist distribution. Currently supports "weibull", "exponential", 
 #' "piecewise_exponential", "gengamma", "lognormal", "gompertz", "etsp" (exponentially-truncated shifted power family),
-#' "loglogistic", "dagum"
+#' "loglogistic", "dagum". The loglogistic and piecewise exponential distributions are constrained 
+#' to have a monotonically non-increasing hazard. See Details for more.
 #' @param breakpoints if distribution is "piecewise_exponential", the breakpoints (in months) where
-#' the distribution should be divided
+#' the distribution should be divided. For example, to have three distinct age groups [0,1), [1,12), [12,\eqn{\infty}),
+#' set breakpoints = c(0,1,12), or breakpoints = c(1,12).
 #' @param init_vals an optional vector of initial values at which to start the optimizer for the 
 #' parameters. Must specify the appropriate number of parameters for the given distribution /
 #' number of periods.
-#' @param etsp_c If dist is etsp, fixed value to use for the c parameter. Default is zero.
 #' @return A list containing: 
 #' \itemize{
 #' \item result: a dataframe of summarized results
