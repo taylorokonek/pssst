@@ -455,7 +455,7 @@ surv_synthetic <- function(df,
         test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
         for (i in 1:nrow(df)) {
           test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
-                                            x = log_scales, 
+                                            x = optim_res$par, 
                                             data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
                                             weights = 1,
                                             shape_par_ids = NA,
