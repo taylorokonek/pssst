@@ -235,11 +235,11 @@ public:
 // [[Rcpp::export]]
 double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints, double etsp_c = 0) {
   NumericVector scale_vec = exp(log_scale_vec);
-  if (dist == 2) {
-    scale_vec = cumsum1(scale_vec);
-    std::reverse(scale_vec.begin(), scale_vec.end());
-  }
   NumericVector rate_param_vec = 1/scale_vec;
+  if (dist == 2) {
+    rate_param_vec = cumsum1(rate_param_vec);
+    std::reverse(rate_param_vec.begin(), rate_param_vec.end());
+  }
   double shape_param = exp(log_shape);
   if (dist == 7) {
     shape_param = exp(log_shape)/(1+exp(log_shape)); // logit instead of log transformation for log-logistic to constrain non-increasing hazard
@@ -390,11 +390,11 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
 // 8 = Dagum
 double rcpp_l_hazard(double x, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints) {
   NumericVector scale_vec = exp(log_scale_vec);
-  if (dist == 2) {
-    scale_vec = cumsum1(scale_vec);
-    std::reverse(scale_vec.begin(), scale_vec.end());
-  }
   NumericVector rate_param_vec = 1/scale_vec;
+  if (dist == 2) {
+    rate_param_vec = cumsum1(rate_param_vec);
+    std::reverse(rate_param_vec.begin(), rate_param_vec.end());
+  }
   double shape_param = exp(log_shape);
   if (dist == 7) {
     shape_param = exp(log_shape)/(1+exp(log_shape)); // logit instead of log transformation for log-logistic to constrain non-increasing hazard
