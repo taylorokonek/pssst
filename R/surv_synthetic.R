@@ -24,6 +24,16 @@
 #' 
 #' in Scholey (2019), but sets \eqn{c = 0}.
 #' 
+#' The log-logistic and piecewise exponential distributions are constrained to have a 
+#' monotonically non-increasing hazard. In practice, the only difference from the typical 
+#' log-logistic distribution is that the shape parameter is constrained to lie within (0,1] 
+#' rather than (0, \eqn{\infty}). For the piecewise exponential, rate parameters have the same support
+#' as a typically parameterized piecewise exponential, but the distribution is such that the hazard 
+#' is a reverse cumulative sum of rate parameters. For example, if we have three age groups, x < 1, 
+#' 1 < x < 12, and 12 < x, the hazard function is given by
+#' 
+#' \deqn{h(x) = (\beta_0 + \beta+1 + \beta_2) I[x < 1] + (\beta_0 + \beta+1) I[1 < x < 12] + (\beta_0) I[12 < x]
+#' 
 #' @param df a dataframe containing the output from \code{format_dhs}, or optionally, dataframe
 #' containing the following columns
 #' @param individual column corresponding to individual ID in \code{df}
@@ -55,7 +65,8 @@
 #' at the moment.
 #' @param dist distribution. Currently supports "weibull", "exponential", 
 #' "piecewise_exponential", "gengamma", "lognormal", "gompertz", "etsp" (exponentially-truncated shifted power family),
-#' "loglogistic", "dagum"
+#' "loglogistic", "dagum". The loglogistic and piecewise exponential distributions are constrained 
+#' to have a monotonically non-increasing hazard. See Details for more.
 #' @param breakpoints if distribution is "piecewise_exponential", the breakpoints (in months) where
 #' the distribution should be divided
 #' @param init_vals an optional vector of initial values at which to start the optimizer for the 
@@ -444,7 +455,7 @@ surv_synthetic <- function(df,
         test_scores <- matrix(nrow = nrow(df), ncol = length(optim_res$par))
         for (i in 1:nrow(df)) {
           test_scores[i,] <- numDeriv::grad(optim_fn_grad, 
-                                            x = optim_res$par, 
+                                            x = log_scales, 
                                             data = df[i,c("I_i","A_i","t_i","t_0i","t_1i", a_pi_cols, l_p_cols)],
                                             weights = 1,
                                             shape_par_ids = NA,
@@ -607,7 +618,7 @@ surv_synthetic <- function(df,
         }
       }
       
-      # loglogistc
+      # loglogistic
     } else if (dist == 7) {
       message("fitting model")
       

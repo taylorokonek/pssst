@@ -190,8 +190,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // rcpp_hazard_integral
-double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints);
-RcppExport SEXP _pssst_rcpp_hazard_integral(SEXP lower_boundSEXP, SEXP upper_boundSEXP, SEXP log_shapeSEXP, SEXP log_scale_vecSEXP, SEXP distSEXP, SEXP breakpointsSEXP) {
+double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints, double etsp_c);
+RcppExport SEXP _pssst_rcpp_hazard_integral(SEXP lower_boundSEXP, SEXP upper_boundSEXP, SEXP log_shapeSEXP, SEXP log_scale_vecSEXP, SEXP distSEXP, SEXP breakpointsSEXP, SEXP etsp_cSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -201,7 +201,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type log_scale_vec(log_scale_vecSEXP);
     Rcpp::traits::input_parameter< int >::type dist(distSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type breakpoints(breakpointsSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcpp_hazard_integral(lower_bound, upper_bound, log_shape, log_scale_vec, dist, breakpoints));
+    Rcpp::traits::input_parameter< double >::type etsp_c(etsp_cSEXP);
+    rcpp_result_gen = Rcpp::wrap(rcpp_hazard_integral(lower_bound, upper_bound, log_shape, log_scale_vec, dist, breakpoints, etsp_c));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -237,7 +238,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_pssst_rcpp_F_dagum", (DL_FUNC) &_pssst_rcpp_F_dagum, 6},
     {"_pssst_rcpp_f_dagum", (DL_FUNC) &_pssst_rcpp_f_dagum, 5},
     {"_pssst_rcpp_f_gompertz", (DL_FUNC) &_pssst_rcpp_f_gompertz, 4},
-    {"_pssst_rcpp_hazard_integral", (DL_FUNC) &_pssst_rcpp_hazard_integral, 6},
+    {"_pssst_rcpp_hazard_integral", (DL_FUNC) &_pssst_rcpp_hazard_integral, 7},
     {"_pssst_rcpp_turnbull", (DL_FUNC) &_pssst_rcpp_turnbull, 8},
     {NULL, NULL, 0}
 };

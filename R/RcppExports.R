@@ -49,8 +49,8 @@ rcpp_f_gompertz <- function(x, rate, shape, give_log) {
     .Call(`_pssst_rcpp_f_gompertz`, x, rate, shape, give_log)
 }
 
-rcpp_hazard_integral <- function(lower_bound, upper_bound, log_shape, log_scale_vec, dist, breakpoints) {
-    .Call(`_pssst_rcpp_hazard_integral`, lower_bound, upper_bound, log_shape, log_scale_vec, dist, breakpoints)
+rcpp_hazard_integral <- function(lower_bound, upper_bound, log_shape, log_scale_vec, dist, breakpoints, etsp_c = 0) {
+    .Call(`_pssst_rcpp_hazard_integral`, lower_bound, upper_bound, log_shape, log_scale_vec, dist, breakpoints, etsp_c)
 }
 
 rcpp_turnbull <- function(niter, t0, t1, lefttrunc, righttrunc, weights, set_lower, set_upper) {
