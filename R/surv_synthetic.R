@@ -182,10 +182,21 @@ surv_synthetic <- function(df,
     stop("at least one observation has an interval-censored time where t_0 > t_1")
   }
   
-  # remove 0 and Inf from breakpoints, if needed, and sort
+  # remove 0 and Inf from breakpoints, if needed
+  # remove max age at death from breakpoints, if needed (for example, if everyone is censored at age 60, remove 60)
+  # and sort
   if (!is.na(breakpoints[1])) {
-    breakpoints <- sort(breakpoints[!(breakpoints %in% c(0, Inf))])
+    # max age at death recorded (or max at censoring)
+    max_age <- max(max(df$t_1i, na.rm = TRUE), max(df$t_i, na.rm = TRUE))
+    
+    # give warning if max age is in breakpoints
+    if (max_age %in% breakpoints) {
+      message("removing age ", max_age, " from breakpoints, since no deaths recorded after this age. see function documentation for example breakpoints")
+    }
+    
+    breakpoints <- sort(breakpoints[!(breakpoints %in% c(0, Inf, max_age))])
   }
+  
   
   # set distribution to integer
   if (dist == "weibull") {
@@ -621,7 +632,7 @@ surv_synthetic <- function(df,
         }
       }
       
-      # loglogistc
+      # loglogistic
     } else if (dist == 7) {
       message("fitting model")
       
@@ -883,9 +894,9 @@ surv_synthetic <- function(df,
       ret_df$NMR <- NA
       ret_df$IMR <- NA
       for (i in 1:nrow(ret_df)) {
-        ret_df$U5MR[i] <- rcpp_F_loglogistic(60, shape = exp(ret_df$log_shape_mean[i]), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
-        ret_df$NMR[i] <- rcpp_F_loglogistic(1, shape = exp(ret_df$log_shape_mean[i]), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
-        ret_df$IMR[i] <- rcpp_F_loglogistic(12, shape = exp(ret_df$log_shape_mean[i]), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
+        ret_df$U5MR[i] <- rcpp_F_loglogistic(60, shape = plogis(ret_df$log_shape_mean[i]), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
+        ret_df$NMR[i] <- rcpp_F_loglogistic(1, shape = plogis(ret_df$log_shape_mean[i]), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
+        ret_df$IMR[i] <- rcpp_F_loglogistic(12, shape = plogis(ret_df$log_shape_mean[i]), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
       }
     }
     else if (dist == 8) {

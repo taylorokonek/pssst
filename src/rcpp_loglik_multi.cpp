@@ -71,6 +71,7 @@ NumericVector rcpp_loglik_multi(DataFrame x_df, int num_periods, NumericVector l
   } else {
     log_shape_internal = log_shapes;
   }
+
   
   // initalize objects
   NumericVector ret_vec(x.nrow());
