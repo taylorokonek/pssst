@@ -80,7 +80,8 @@ at the moment.}
 to have a monotonically non-increasing hazard. See Details for more.}
 
 \item{breakpoints}{if distribution is "piecewise_exponential", the breakpoints (in months) where
-the distribution should be divided}
+the distribution should be divided. For example, to have three distinct age groups [0,1), [1,12), [12,\eqn{\infty}),
+set breakpoints = c(0,1,12), or breakpoints = c(1,12).}
 
 \item{init_vals}{an optional vector of initial values at which to start the optimizer for the
 parameters. Must specify the appropriate number of parameters for the given distribution /

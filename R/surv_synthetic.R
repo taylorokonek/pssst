@@ -68,7 +68,8 @@
 #' "loglogistic", "dagum". The loglogistic and piecewise exponential distributions are constrained 
 #' to have a monotonically non-increasing hazard. See Details for more.
 #' @param breakpoints if distribution is "piecewise_exponential", the breakpoints (in months) where
-#' the distribution should be divided
+#' the distribution should be divided. For example, to have three distinct age groups [0,1), [1,12), [12,\eqn{\infty}),
+#' set breakpoints = c(0,1,12), or breakpoints = c(1,12).
 #' @param init_vals an optional vector of initial values at which to start the optimizer for the 
 #' parameters. Must specify the appropriate number of parameters for the given distribution /
 #' number of periods.
@@ -180,10 +181,21 @@ surv_synthetic <- function(df,
     stop("at least one observation has an interval-censored time where t_0 > t_1")
   }
   
-  # remove 0 and Inf from breakpoints, if needed, and sort
+  # remove 0 and Inf from breakpoints, if needed
+  # remove max age at death from breakpoints, if needed (for example, if everyone is censored at age 60, remove 60)
+  # and sort
   if (!is.na(breakpoints[1])) {
-    breakpoints <- sort(breakpoints[!(breakpoints %in% c(0, Inf))])
+    # max age at death recorded (or max at censoring)
+    max_age <- max(max(df$t_1i, na.rm = TRUE), max(df$t_i, na.rm = TRUE))
+    
+    # give warning if max age is in breakpoints
+    if (max_age %in% breakpoints) {
+      message("removing age ", max_age, " from breakpoints, since no deaths recorded after this age. see function documentation for example breakpoints")
+    }
+    
+    breakpoints <- sort(breakpoints[!(breakpoints %in% c(0, Inf, max_age))])
   }
+  
   
   # set distribution to integer
   if (dist == "weibull") {
