@@ -14,6 +14,11 @@ format_dhs
 }
 
 \author{
-\strong{Maintainer}: Taylor Okonek \email{tokonek@uw.edu}
+\strong{Maintainer}: Taylor Okonek \email{tokonek@macalester.edu}
+
+Other contributors:
+\itemize{
+  \item Katie Paulson \email{krpaul@uw.edu} [contributor]
+}
 
 }

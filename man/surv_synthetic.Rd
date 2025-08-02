@@ -25,7 +25,8 @@ surv_synthetic(
   dist = "weibull",
   breakpoints = NA,
   init_vals = NA,
-  etsp_c = 0
+  etsp_c = 0,
+  force_nonincreasing = FALSE
 )
 }
 \arguments{
@@ -77,8 +78,8 @@ at the moment.}
 
 \item{dist}{distribution. Currently supports "weibull", "exponential",
 "piecewise_exponential", "gengamma", "lognormal", "gompertz", "etsp" (exponentially-truncated shifted power family),
-"loglogistic", "dagum". The loglogistic and piecewise exponential distributions are constrained
-to have a monotonically non-increasing hazard. See Details for more.}
+"loglogistic", "dagum". The loglogistic and piecewise exponential distributions can optionally be constrained
+to have a monotonically non-increasing hazard, using \code{force_nonincreasing}. See Details for more.}
 
 \item{breakpoints}{if distribution is "piecewise_exponential", the breakpoints (in months) where
 the distribution should be divided. For example, to have three distinct age groups [0,1), [1,12), [12,\eqn{\infty}),
@@ -87,6 +88,12 @@ set breakpoints = c(0,1,12), or breakpoints = c(1,12).}
 \item{init_vals}{an optional vector of initial values at which to start the optimizer for the
 parameters. Must specify the appropriate number of parameters for the given distribution /
 number of periods.}
+
+\item{etsp_c}{if "etsp" distribution is used, the value to set the c parameter equal to. Defaults to 0.}
+
+\item{force_nonincreasing}{a boolean, specifying (for the log-logistic and piecewise exponential
+distributions) whether to force the hazard to be non-increasing across age. Defaults to FALSE. This option
+is not available for other distributions.}
 }
 \value{
 A list containing:

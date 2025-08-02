@@ -7,13 +7,14 @@
 #' @param dist integer denoting which distribution to use
 #' @param num_periods number of periods in dataframe
 #' @param etsp_c if dist is etsp, fixed value to use for the c parameter. Default is zero.
+#' @param force_nonincreasing for log-logistic and piecewise-exponential. Default is FALSE
 #' @return negative log likelihood
 #' 
 #' @author Taylor Okonek
 #' @noRd
 #' @keywords internal
 optim_fn <- function(par, data, weights, shape_par_ids, dist, breakpoints,
-                     num_periods, etsp_c = 0) {
+                     num_periods, etsp_c = 0, force_nonincreasing = FALSE) {
   # weibull
   if (dist == 1) {
     pars_per_period <- length(par[-shape_par_ids]) / num_periods
@@ -25,7 +26,9 @@ optim_fn <- function(par, data, weights, shape_par_ids, dist, breakpoints,
                            log_scales = par[-shape_par_ids], 
                            dist = dist,
                            breakpoints = breakpoints,
-                           par_period_id = par_period_id)
+                           par_period_id = par_period_id,
+                           etsp_c = etsp_c,
+                           force_nonincreasing = force_nonincreasing)
     
     ret <- -sum(rep(a * weights, times = data[,ncol(data)]))
     
@@ -42,7 +45,9 @@ optim_fn <- function(par, data, weights, shape_par_ids, dist, breakpoints,
                            log_scales = par, 
                            dist = 1,
                            breakpoints = breakpoints,
-                           par_period_id = par_period_id)
+                           par_period_id = par_period_id,
+                           etsp_c = etsp_c,
+                           force_nonincreasing = force_nonincreasing)
     
     ret <- -sum(rep(a * weights, times = data[,ncol(data)]))
     
@@ -57,7 +62,9 @@ optim_fn <- function(par, data, weights, shape_par_ids, dist, breakpoints,
                            log_scales = par, 
                            dist = dist,
                            breakpoints = breakpoints,
-                           par_period_id = par_period_id)
+                           par_period_id = par_period_id,
+                           etsp_c = etsp_c,
+                           force_nonincreasing = force_nonincreasing)
     
     ret <- -sum(rep(a * weights, times = data[,ncol(data)]))
     
@@ -71,7 +78,9 @@ optim_fn <- function(par, data, weights, shape_par_ids, dist, breakpoints,
                                   log_scales = par[-shape_par_ids], 
                                   dist = dist,
                                   breakpoints = breakpoints,
-                                  par_period_id = par_period_id) 
+                                  par_period_id = par_period_id,
+                           etsp_c = etsp_c,
+                           force_nonincreasing = force_nonincreasing) 
     
     ret <- -sum(rep(a * weights, times = data[,ncol(data)]))
     
@@ -86,7 +95,8 @@ optim_fn <- function(par, data, weights, shape_par_ids, dist, breakpoints,
                            dist = dist,
                            breakpoints = breakpoints,
                            par_period_id = par_period_id,
-                           etsp_c = etsp_c) 
+                           etsp_c = etsp_c,
+                           force_nonincreasing = force_nonincreasing)
     
     ret <- -sum(rep(a * weights, times = data[,ncol(data)]))
 
@@ -109,7 +119,7 @@ optim_fn <- function(par, data, weights, shape_par_ids, dist, breakpoints,
 #' @noRd
 #' @keywords internal
 optim_fn_grad <- function(par, data, weights, shape_par_ids, dist,
-                          num_periods, breakpoints, etsp_c = 0) {
+                          num_periods, breakpoints, etsp_c = 0, force_nonincreasing = FALSE) {
   if (dist == 1) {
     pars_per_period <- length(par[-shape_par_ids]) / num_periods
     par_period_id <- rep(1:num_periods, each = pars_per_period)
@@ -120,7 +130,9 @@ optim_fn_grad <- function(par, data, weights, shape_par_ids, dist,
                           log_scales = par[-shape_par_ids], 
                           dist = dist,
                           breakpoints = breakpoints,
-                          par_period_id = par_period_id) * weights)
+                          par_period_id = par_period_id,
+                          etsp_c = etsp_c,
+                          force_nonincreasing = force_nonincreasing) * weights)
   } else if (dist == 0) {
     pars_per_period <- length(par) / num_periods
     par_period_id <- rep(1:num_periods, each = pars_per_period)
@@ -132,7 +144,9 @@ optim_fn_grad <- function(par, data, weights, shape_par_ids, dist,
                           log_scales = par, 
                           dist = 1,
                           breakpoints = breakpoints,
-                          par_period_id = par_period_id) * weights)
+                          par_period_id = par_period_id,
+                          etsp_c = etsp_c,
+                          force_nonincreasing = force_nonincreasing) * weights)
   } else if (dist == 2) {
     pars_per_period <- length(par) / num_periods
     par_period_id <- rep(1:num_periods, each = pars_per_period)
@@ -143,7 +157,9 @@ optim_fn_grad <- function(par, data, weights, shape_par_ids, dist,
                           log_scales = par, 
                           dist = dist,
                           breakpoints = breakpoints,
-                          par_period_id = par_period_id) * weights)
+                          par_period_id = par_period_id,
+                          etsp_c = etsp_c,
+                          force_nonincreasing = force_nonincreasing) * weights)
   } else if (dist == 3) {
     pars_per_period <- length(par[-shape_par_ids]) / num_periods
     par_period_id <- rep(1:num_periods, each = pars_per_period)
@@ -154,7 +170,9 @@ optim_fn_grad <- function(par, data, weights, shape_par_ids, dist,
                            log_scales = par[-shape_par_ids], 
                            dist = dist,
                            breakpoints = breakpoints,
-                           par_period_id = par_period_id) * weights)
+                           par_period_id = par_period_id,
+                           etsp_c = etsp_c,
+                           force_nonincreasing = force_nonincreasing) * weights)
   } else if (dist == 4 | dist == 5 | dist == 6 | dist == 7 | dist == 8) {
     pars_per_period <- length(par[-shape_par_ids]) / num_periods
     par_period_id <- rep(1:num_periods, each = pars_per_period)
@@ -166,7 +184,8 @@ optim_fn_grad <- function(par, data, weights, shape_par_ids, dist,
                                dist = dist,
                                breakpoints = breakpoints,
                                par_period_id = par_period_id,
-                               etsp_c = etsp_c) * weights)
+                               etsp_c = etsp_c,
+                               force_nonincreasing = force_nonincreasing) * weights)
     
   }
   return(a)
@@ -183,9 +202,14 @@ optim_fn_grad <- function(par, data, weights, shape_par_ids, dist,
 #' @author Taylor Okonek
 #' @noRd
 #' @keywords internal
-p_piecewise_exponential <- function(x, log_scales, breakpoints, log = FALSE) {
+p_piecewise_exponential <- function(x, log_scales, breakpoints, log = FALSE, force_nonincreasing) {
   # F(x) = 1 - exp(-H(x))
-  H_x <- rcpp_hazard_integral(0, x, 1, log_scales, 2, breakpoints)
+  H_x <- rcpp_hazard_integral(lower_bound = 0, upper_bound = x, 
+                              log_shape = 1, 
+                              log_scale_vec = log_scales, 
+                              dist = 2, 
+                              breakpoints = breakpoints, 
+                              force_nonincreasing = force_nonincreasing)
   if (log) {
     log(1 - exp(-H_x))
   } else {

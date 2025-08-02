@@ -22,15 +22,16 @@
 #' 
 #' \deqn{h(x) = a(x + c)^{-p} e^{-b x}}
 #' 
-#' in Scholey (2019), but sets \eqn{c = 0}.
+#' in Scholey (2019). Defaults to \eqn{c = 0}. Change this with the `etsp_c` parameter.
 #' 
-#' The log-logistic and piecewise exponential distributions are constrained to have a 
+#' The log-logistic and piecewise exponential distributions can be constrained to have a 
 #' monotonically non-increasing hazard. In practice, the only difference from the typical 
 #' log-logistic distribution is that the shape parameter is constrained to lie within (0,1] 
 #' rather than (0, \eqn{\infty}). For the piecewise exponential, rate parameters have the same support
 #' as a typically parameterized piecewise exponential, but the distribution is such that the hazard 
-#' is a reverse cumulative sum of rate parameters. For example, if we have three age groups, x < 1, 
-#' 1 < x < 12, and 12 < x, the hazard function is given by
+#' is a reverse cumulative sum of rate parameters in a given age group. 
+#' For example, if we have three age groups, x < 1, 1 < x < 12, and 12 < x, the hazard function is 
+#' given by
 #' 
 #' \deqn{h(x) = (\beta_0 + \beta+1 + \beta_2) I[x < 1] + (\beta_0 + \beta+1) I[1 < x < 12] + (\beta_0) I[12 < x]
 #' 
@@ -65,14 +66,18 @@
 #' at the moment.
 #' @param dist distribution. Currently supports "weibull", "exponential", 
 #' "piecewise_exponential", "gengamma", "lognormal", "gompertz", "etsp" (exponentially-truncated shifted power family),
-#' "loglogistic", "dagum". The loglogistic and piecewise exponential distributions are constrained 
-#' to have a monotonically non-increasing hazard. See Details for more.
+#' "loglogistic", "dagum". The loglogistic and piecewise exponential distributions can optionally be constrained 
+#' to have a monotonically non-increasing hazard, using `force_nonincreasing`. See Details for more.
 #' @param breakpoints if distribution is "piecewise_exponential", the breakpoints (in months) where
 #' the distribution should be divided. For example, to have three distinct age groups [0,1), [1,12), [12,\eqn{\infty}),
 #' set breakpoints = c(0,1,12), or breakpoints = c(1,12).
 #' @param init_vals an optional vector of initial values at which to start the optimizer for the 
 #' parameters. Must specify the appropriate number of parameters for the given distribution /
 #' number of periods.
+#' @param etsp_c if "etsp" distribution is used, the value to set the c parameter equal to. Defaults to 0.
+#' @param force_nonincreasing a boolean, specifying (for the log-logistic and piecewise exponential 
+#' distributions) whether to force the hazard to be non-increasing across age. Defaults to FALSE. This option
+#' is not available for other distributions.
 #' @return A list containing: 
 #' \itemize{
 #' \item result: a dataframe of summarized results
@@ -119,7 +124,8 @@ surv_synthetic <- function(df,
                            dist = "weibull",
                            breakpoints = NA,
                            init_vals = NA,
-                           etsp_c = 0) {
+                           etsp_c = 0,
+                           force_nonincreasing = FALSE) {
   
   # error checking
   if (survey & is.null(weights)) {
@@ -218,6 +224,21 @@ surv_synthetic <- function(df,
   } else if (dist == "dagum") {
     dist <- 8 
   }
+  
+  # Throw message if force_nonincreasing == TRUE and dist is not 2 or 7
+  if (!(dist %in% c(2,7))) {
+    if (force_nonincreasing) {
+      message("non-increasing hazard constraint not available for this distribution. ignoring force_nonincreasing = TRUE")
+    }
+  }
+  
+  # Throw message if etsp_c != 0 and dist != 6
+  if (dist != 6) {
+    if (etsp_c != 0) {
+      message(paste0("the c parameter is only a part of the etsp distribution. ignoring etsp_c = ", etsp_c))
+    }
+  }
+  
   # make new df with appropriate columns
   temp <- df[,c(individual, household, cluster, strata, weights, p, a_pi, l_p,
                 I_i, A_i, t_i, t_0i, t_1i)]
@@ -461,6 +482,7 @@ surv_synthetic <- function(df,
                          shape_par_ids = NA,
                          dist = dist,
                          breakpoints = breakpoints,
+                         force_nonincreasing = force_nonincreasing,
                          num_periods = n_periods,
                          method = "BFGS",
                          hessian = TRUE)
@@ -478,6 +500,7 @@ surv_synthetic <- function(df,
                                             shape_par_ids = NA,
                                             dist = dist,
                                             breakpoints = breakpoints,
+                                            force_nonincreasing = force_nonincreasing,
                                             num_periods = n_periods)
         }
       }
@@ -648,6 +671,7 @@ surv_synthetic <- function(df,
                          shape_par_ids = 1:n_periods,
                          dist = dist,
                          breakpoints = breakpoints,
+                         force_nonincreasing = force_nonincreasing,
                          num_periods = n_periods,
                          method = "BFGS",
                          hessian = TRUE)
@@ -665,6 +689,7 @@ surv_synthetic <- function(df,
                                             shape_par_ids = 1:n_periods,
                                             dist = dist,
                                             breakpoints = breakpoints,
+                                            force_nonincreasing = force_nonincreasing,
                                             num_periods = n_periods)
         }
       }
@@ -796,9 +821,9 @@ surv_synthetic <- function(df,
       ret_df$IMR <- NA
       ret_df$NMR <- NA
       for (i in 1:nrow(ret_df)) {
-        ret_df$U5MR[i] <- p_piecewise_exponential(60, log_scales = unlist(ret_df[i,c(2:(length(breakpoints) + 2))]), breakpoints = breakpoints)
-        ret_df$IMR[i] <- p_piecewise_exponential(12, log_scales = unlist(ret_df[i,c(2:(length(breakpoints) + 2))]), breakpoints = breakpoints)
-        ret_df$NMR[i] <- p_piecewise_exponential(1, log_scales = unlist(ret_df[i,c(2:(length(breakpoints) + 2))]), breakpoints = breakpoints)
+        ret_df$U5MR[i] <- p_piecewise_exponential(60, log_scales = unlist(ret_df[i,c(2:(length(breakpoints) + 2))]), breakpoints = breakpoints, force_nonincreasing = force_nonincreasing)
+        ret_df$IMR[i] <- p_piecewise_exponential(12, log_scales = unlist(ret_df[i,c(2:(length(breakpoints) + 2))]), breakpoints = breakpoints, force_nonincreasing = force_nonincreasing)
+        ret_df$NMR[i] <- p_piecewise_exponential(1, log_scales = unlist(ret_df[i,c(2:(length(breakpoints) + 2))]), breakpoints = breakpoints, force_nonincreasing = force_nonincreasing)
       }
       
       # generalized gamma
@@ -894,9 +919,15 @@ surv_synthetic <- function(df,
       ret_df$NMR <- NA
       ret_df$IMR <- NA
       for (i in 1:nrow(ret_df)) {
-        ret_df$U5MR[i] <- rcpp_F_loglogistic(60, shape = plogis(ret_df$log_shape_mean[i]), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
-        ret_df$NMR[i] <- rcpp_F_loglogistic(1, shape = plogis(ret_df$log_shape_mean[i]), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
-        ret_df$IMR[i] <- rcpp_F_loglogistic(12, shape = plogis(ret_df$log_shape_mean[i]), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
+        if (force_nonincreasing) {
+          ret_df$U5MR[i] <- rcpp_F_loglogistic(60, shape = plogis(ret_df$log_shape_mean[i]), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
+          ret_df$NMR[i] <- rcpp_F_loglogistic(1, shape = plogis(ret_df$log_shape_mean[i]), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
+          ret_df$IMR[i] <- rcpp_F_loglogistic(12, shape = plogis(ret_df$log_shape_mean[i]), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
+        } else {
+          ret_df$U5MR[i] <- rcpp_F_loglogistic(60, shape = exp(ret_df$log_shape_mean[i]), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
+          ret_df$NMR[i] <- rcpp_F_loglogistic(1, shape = exp(ret_df$log_shape_mean[i]), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
+          ret_df$IMR[i] <- rcpp_F_loglogistic(12, shape = exp(ret_df$log_shape_mean[i]), scale = exp(ret_df$log_scale_mean[i]), 1, 0)
+        }
       }
     }
     else if (dist == 8) {

@@ -3,11 +3,10 @@ Type: Package
 Title: Parametric Survey-weighted Survival models for Synthetic children over Time
 Version: 1.0
 Date: 2022-08-26
-Authors@R: 
-    person(given = "Taylor",
-           family = "Okonek",
-           role = c("aut", "cre"),
-           email = "tokonek@uw.edu")
+Authors@R: c(
+    person(given = "Taylor",family = "Okonek", role = c("aut", "cre"), email = "tokonek@macalester.edu"),
+    person(given = "Katie", family = "Paulson", email= "krpaul@uw.edu", role = "ctb")
+    )
 Maintainer: Taylor Okonek <tokonek@uw.edu>
 Description: Fit parametric survival models to survey data to estimate finite-population, synthetic child mortality across multiple time periods.
 License: GPL-3 + file LICENSE
