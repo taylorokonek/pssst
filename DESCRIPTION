@@ -5,10 +5,12 @@ Version: 1.0
 Date: 2022-08-26
 Authors@R: c(
     person(given = "Taylor",family = "Okonek", role = c("aut", "cre"), email = "tokonek@macalester.edu"),
-    person(given = "Katie", family = "Paulson", email= "krpaul@uw.edu", role = "ctb")
+    person(given = "Katie", family = "Paulson", email= "krpaul@uw.edu", role = "ctb"),
+    person(given = "Quinn", family = "White", email = "qwhite@uw.edu", role = "ctb"),
+    person(given = "Jon", family = "Wakefield", email = "jonno@uw.edu", role = "ctb", comment = "Contributed to statistical methods development")
     )
 Maintainer: Taylor Okonek <tokonek@uw.edu>
-Description: Fit parametric survival models to survey data to estimate finite-population, synthetic child mortality across multiple time periods.
+Description: Fit parametric survival models to survey data to estimate finite-population, synthetic child mortality across multiple time periods. The methods implemented in this package are developed / described in Okonek, Wilson, and Wakefield (2025) <https://arxiv.org/pdf/2310.11357>
 License: GPL-3 + file LICENSE
 Encoding: UTF-8
 LazyData: true

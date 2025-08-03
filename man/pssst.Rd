@@ -6,7 +6,7 @@
 \alias{pssst}
 \title{pssst: Parametric Survey-weighted Survival models for Synthetic children across Time}
 \description{
-Fit parametric survival models to survey data to estimate finite-population, synthetic child mortality across multiple time periods.
+Fit parametric survival models to survey data to estimate finite-population, synthetic child mortality across multiple time periods. The methods implemented in this package are developed / described in Okonek, Wilson, and Wakefield (2025) \url{https://arxiv.org/pdf/2310.11357}
 }
 \section{pssst functions}{
 
@@ -19,6 +19,8 @@ format_dhs
 Other contributors:
 \itemize{
   \item Katie Paulson \email{krpaul@uw.edu} [contributor]
+  \item Quinn White \email{qwhite@uw.edu} [contributor]
+  \item Jon Wakefield \email{jonno@uw.edu} (Contributed to statistical methods development) [contributor]
 }
 
 }
