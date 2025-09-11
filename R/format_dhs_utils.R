@@ -216,3 +216,93 @@ df_expand <- function(surv_df,
   return(test)
   
 }
+
+
+#' @title Add strata column to DHS birth recode module
+#'
+#' @description Add strata column for DHS birth recode manual, based on
+#'  combining existing columns, e.g. a column for region and a column for
+#'  rurality. This is based on the DHS .do file available at:
+#'  https://github.com/DHSProgram/DHS-Analysis-Code/blob/main/Intro_DHSdata_Analysis/2_SurveyDesign/Survey_strata.do
+#'  and is consistent with the guidance in Chapter 1 of DHS Guide to Statistics.
+#'  
+#' @param df data.frame with DHS dataset as downloaded.
+#' 
+#' @references
+#' Assaf, S. (2021). Survey_strata.do. GitHub.
+#'  https://github.com/DHSProgram/DHS-Analysis-Code/blob/main/Intro_DHSdata_Analysis/2_SurveyDesign/Survey_strata.do
+#' 
+#' Croft, Trevor N., Allen, Courtney K., Zachary, Blake W., et al. 2023.
+#'  Guide to DHS Statistics. Rockville, Maryland, USA: ICF. https://dhsprogram.com/data/Guide-to-DHS-Statistics/index.cfm
+#' 
+#' @return data.frame with "strata" column added.
+#'
+#' @export
+create_strata_dhs <- function(df) {
+  
+  # add missing columns as necessary, fill with NA
+  cols <- c("v022", "v023", "v024", "v025", "sstratum", "sstrate", "sdepart",
+            "scty", "secozone", "sdepto")
+  df[setdiff(cols, names(df))] <- NA
+  
+  # create default strata and some other new variables
+  df <- df %>%
+    mutate(
+      strata = as.character(v022), # default strata
+      strata_v023 = paste0(v023, " - ", v025),
+      strata_v024 = paste0(v024, " - ", v025), # v024 is region, v025 is rurality
+      phase = v000,
+      year = as.numeric(as.character(v007))
+    )
+  
+  # list exception groups
+  v023_phases <- 
+    c("AL5", "AM4", "AZ5", "BD5", "BJ4", "BF3", "CM4", "KM6", "CI3", "EG2",
+      "ET4", "GA3", "GH3", "GN3", "ID2", "ID3", "KK3", "KE2", "KE3", "KY3",
+      "LB6", "MD3", "MD4", "MW2", "ML3", "MB4", "MZ3", "NM4", "NG3", "NG4",
+      "PE5", "SN2", "TZ2", "TR3", "TR4", "TR6", "UG3", "UZ3", "ZM3", "ZW3",
+      "ZW4")
+  strata_v023_phases <- 
+    c("BD3", "BO4", "BR2", "BR3", "BF4", "DR2", "GH4", "GU3", "GN4", "HN5",
+      "JO5", "KE4", "MW4", "ML4", "ML5", "MA4", "MZ4", "NP4", "NP5", "NP6",
+      "NC3", "NC4", "NI5", "PK5", "PK6", "PE2", "PE3", "PH2", "PH3", "PH4",
+      "RW4", "RW6", "TR2")
+  strata_v024_phases <- 
+    c("BD4", "BJ3", "BJ6", "CF3", "TD4", "CO2", "CO3", "KM3", "CG5", "CD5",
+      "DR3", "DR4", "DR5", "EG3", "EG4", "GH2", "GY4", "HT4", "HT5", "IA2",
+      "IA3", "ID4", "ID5", "JO2", "JO3", "LS4", "LS5", "MD2", "MA2", "NM2",
+      "NM5", "NI2", "NI3", "NG2", "PK2", "PY2", "PE4", "PH5", "RW2", "ST5",
+      "SN4", "SZ5", "ZA3", "TZ3", "TG3", "TR5", "UG4", "UG5", "UG6", "UA5",
+      "VNT", "YE2", "ZM2", "ZM4", "ZW", "ZW5", "SN5") 
+  group_101_102_phases <- 
+    c("BR", "BF2", "BU", "CO", "DR", "EC", "ES", "EG", "GH", "GU", "ID", "KE",
+      "LB", "LK", "ML", "MX", "MA", "OS", "PE", "SD", "SN", "TH", "TT", "TG",
+      "TN", "UG")
+  
+  # apply exceptions
+  df <- df %>%
+    mutate(
+      strata = case_when(
+        phase %in% v023_phases ~ as.character(v023),
+        phase %in% strata_v023_phases ~ strata_v023,
+        phase %in% strata_v024_phases ~ strata_v024,
+        phase == "BD3" & year %in% c(99, 2000, 0) ~ as.character(v023),
+        phase == "BO3" & year %in% c(93, 94) ~ strata_v023,
+        phase %in% group_101_102_phases ~ paste0(v101, " - ", v102),
+        phase == "KH4" ~ as.character(sstratum),
+        phase == "KH5" & year %in% c(2005, 2006) ~ strata_v024,
+        phase %in% c("CM2", "CM3") ~ as.character(sstrate),
+        phase == "CO4" & year == 2000 ~ strata_v023,
+        phase == "CO4" & year %in% c(2004, 2005) ~ strata_v024,
+        phase == "HT3" ~ paste0(sdepart, " - ", v025),
+        phase == "LB5" & year < 2008 ~ paste0(scty, " - ", v025, " - ", v024),
+        phase == "NP3" ~ paste0(secozone, " - ", v024),
+        phase == "SN2" & year %in% c(92, 93) ~ strata_v024,
+        phase == "BO" & year == 89 ~ paste0(sdepto, " - ", v102),
+        TRUE ~ strata
+      )
+    )
+  
+  return(df)
+}
+
