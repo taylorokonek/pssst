@@ -131,6 +131,13 @@ format_dhs <- function(df,
     }
   }
   
+  # check for individuals who died who are missing information about date of death
+  missing_data <- df %>% filter(is.na(b7) & is.na(b6) & b5 == "no")
+  n_missing <- nrow(missing_data)
+  if (n_missing > 0) {
+    stop(paste0(nrow(missing_data), " individuals who died do not have age at death."))
+  }
+  
   # call get_births
   births <- get_births(dat = df, 
                        surveyyear = survey_year, 
