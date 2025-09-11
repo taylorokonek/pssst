@@ -740,7 +740,8 @@ surv_synthetic <- function(df,
     design <- survey::svydesign(ids = ids_form, 
                                 strata = strata_form,
                                 weights = weights_form, 
-                                data = df)
+                                data = df,
+                                nest = TRUE)
     vmat <- vcov(survey::svytotal(infl_fns, design))
   } else {
     message("computing superpopulation variance")
