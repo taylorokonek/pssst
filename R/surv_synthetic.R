@@ -737,11 +737,27 @@ surv_synthetic <- function(df,
   if (survey) {
     test_invinf <- solve(-optim_res$hessian)
     infl_fns <- test_scores %*% test_invinf
-    design <- survey::svydesign(ids = ids_form, 
-                                strata = strata_form,
-                                weights = weights_form, 
-                                data = df,
-                                nest = TRUE)
+    design <- tryCatch(
+      {
+        survey::svydesign(ids = ids_form, 
+                          strata = strata_form,
+                          weights = weights_form, 
+                          data = df)
+      },
+      error = function(e) {
+        if (grepl("nest", e$message, ignore.case = TRUE)) {
+          warning("Clusters are not nested in strata at top level. Retrying with nest = TRUE...")
+          survey::svydesign(ids = ids_form, 
+                            strata = strata_form,
+                            weights = weights_form, 
+                            data = df,
+                            nest = TRUE)
+        } else {
+          stop(e)
+        }
+      }
+    )
+    
     vmat <- vcov(survey::svytotal(infl_fns, design))
   } else {
     message("computing superpopulation variance")
