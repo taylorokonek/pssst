@@ -45,7 +45,7 @@ using namespace Rcpp;
 // p_vec: time period id
 
 // [[Rcpp::export]]
-NumericVector rcpp_loglik_multi(DataFrame x_df, int num_periods, NumericVector log_shapes, NumericVector log_scales, int dist, NumericVector breakpoints, NumericVector par_period_id, double etsp_c = 0, bool force_nonincreasing = FALSE) {
+NumericVector rcpp_loglik_multi(DataFrame x_df, int num_periods, NumericVector log_shapes, NumericVector log_scales, int dist, NumericVector breakpoints, NumericVector par_period_id, double etsp_c = 0, bool force_nonincreasing = false) {
 
   // Convert dataframe to matrix
   NumericMatrix x = testDFtoNM1(x_df);
