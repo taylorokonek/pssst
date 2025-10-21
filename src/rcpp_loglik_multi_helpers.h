@@ -233,7 +233,7 @@ public:
 // 7 = Log-logistic
 // 8 = Dagum
 // [[Rcpp::export]]
-double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints, double etsp_c = 0.0, bool force_nonincreasing = FALSE) {
+double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints, double etsp_c = 0.0, bool force_nonincreasing = false) {
   NumericVector scale_vec = exp(log_scale_vec);
   NumericVector rate_param_vec = 1/scale_vec;
 
@@ -396,7 +396,7 @@ double rcpp_hazard_integral(double lower_bound, double upper_bound, double log_s
 // 5 = Gompertz
 // 7 = Log-logistic
 // 8 = Dagum
-double rcpp_l_hazard(double x, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints, double etsp_c = 0.0, bool force_nonincreasing = FALSE) {
+double rcpp_l_hazard(double x, double log_shape, NumericVector log_scale_vec, int dist, NumericVector breakpoints, double etsp_c = 0.0, bool force_nonincreasing = false) {
   NumericVector scale_vec = exp(log_scale_vec);
   NumericVector rate_param_vec = 1/scale_vec;
 
