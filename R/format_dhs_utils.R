@@ -42,10 +42,18 @@ get_births <- function(dat,
   }
   
   # extra interval censoring, if specified
-  if (!is.na(intervals[1])) {
+  # apply for intervals where everyone within the interval is interval-censored
+  if (is.null(names(intervals))) {
+    intervals_general <- intervals
+    intervals_targeted <- NULL
+  } else {
+    intervals_general <- intervals[which(names(intervals)=="")]
+    intervals_targeted <- intervals[which(names(intervals)!="")]
+  }
+  if (!all(is.na(intervals_general)) & length(intervals_general) != 0) {
     seq_remove <- c()
-      for (i in 1:length(intervals)) {
-        tmp_int <- intervals[i] %>% str_split("-") %>% unlist %>% as.numeric
+      for (i in 1:length(intervals_general)) {
+        tmp_int <- intervals_general[i] %>% str_split("-") %>% unlist %>% as.numeric
         tmp_seq <- seq(tmp_int[1],tmp_int[2])
         tmp_seq <- tmp_seq[-c(1,length(tmp_seq))]
         seq_remove <- c(seq_remove, tmp_seq)
@@ -98,7 +106,24 @@ get_births <- function(dat,
   
   whichnotdied <- which(datnew$died == 0)
   # EDIT - fix this so that the interval ending with Inf doesn't have a closed right bracket
-  datnew$age_interval <- cut(datnew$age_at_censoring, breaks = c(0,month.cut), include.lowest = TRUE, right = FALSE)
+  datnew$age_interval <- as.character(cut(datnew$age_at_censoring, breaks = c(0,month.cut), include.lowest = TRUE, right = FALSE))
+  
+  # extra interval censoring, for specific months
+  if (length(intervals_targeted) > 0) {
+    for (i in 1:length(intervals_targeted)) {
+      censor_age <- as.numeric(names(intervals_targeted)[i])
+      age_interval <- paste0("[", gsub("-", ",", unname(intervals_targeted)[i]), ")")
+      datnew[!is.na(dat[,age]) & dat[,age] == censor_age,]$age_interval <- age_interval
+    }
+  }
+  
+  # use exact age interval for deaths recorded in years
+  # deaths before 24 months are supposed to be recorded in months but sometimes they are recorded as 1 year
+  age_in_years <- which(dat[, exact_age] >= 300 & dat[, exact_age] < 350)
+  if (length(age_in_years) > 0) {
+    age_in_years_vals <- dat[age_in_years, exact_age]-300
+    datnew[age_in_years,]$age_interval <- paste0("[", age_in_years_vals*12, ",", age_in_years_vals*12+12, ")")
+  }
   
   lower_bound <- sapply(datnew$age_interval, function(x) {x %>% str_split(",") %>% unlist %>% nth(1) %>% 
       gsub("\\[|\\]", "", .) %>%
