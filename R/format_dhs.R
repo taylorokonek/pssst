@@ -14,8 +14,11 @@
 #' consider setting to 60.
 #' @param intervals an optional character vector specifying any specific intervals in which
 #' observations should be censored. For example, to interval censor people between ages 6 and 18
-#' months, \code{intervals} = c("0-1","1-2","6-18"). Intervals cannot overlap (i.e. can't have 6-18, 12-20). Default
-#' intervals are the ones observed in DHS: exact daily deaths before 1 month, monthly through age 24 months, yearly after.
+#' months, \code{intervals} = c("0-1","1-2","6-18"). Intervals cannot overlap (i.e. can't have 6-18, 12-20).
+#' If you would only like to interval censor deaths occurring at a specific value, name the interval that value.
+#' For example, \code{intervals} = c("0-1","1-2","12" = "6-18") would interval censor all individuals in [0,1) months,
+#' all individuals in [1,2) months, and then individuals who died at 12 months will be interval censored to [6,18) months.
+#' Default intervals are the ones observed in DHS: exact daily deaths before 1 month, monthly through age 24 months, yearly after.
 #' Days will be reported as 1/30th of a month. If an individual "Died on day of birth", they are
 #' interval censored from [0, 1/30]
 #' @param cmc_adjust number of months to add to the recorded month in the dataset. As an example, 
