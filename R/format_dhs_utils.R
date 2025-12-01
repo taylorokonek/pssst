@@ -120,12 +120,14 @@ get_births <- function(dat,
   # use exact age interval for deaths recorded in years
   # deaths before 24 months are supposed to be recorded in months but sometimes they are recorded as 1 year
   # convert exact_column to numeric just for this one bit of code
-  age_in_years <- which(as.numeric(dat[, exact_age]) >= 300 & as.numeric(dat[, exact_age]) < 350)
-  if (length(age_in_years) > 0) {
-    age_in_years_vals <- as.numeric(dat[age_in_years, exact_age])-300
-    datnew[age_in_years,]$age_interval <- paste0("[", age_in_years_vals*12, ",", age_in_years_vals*12+12, ")")
-  }
-  
+  suppressWarnings({
+    age_in_years <- which(as.numeric(dat[, exact_age]) >= 300 & as.numeric(dat[, exact_age]) < 350)
+    if (length(age_in_years) > 0) {
+      age_in_years_vals <- as.numeric(dat[age_in_years, exact_age])-300
+      datnew[age_in_years,]$age_interval <- paste0("[", age_in_years_vals*12, ",", age_in_years_vals*12+12, ")")
+    }
+  })
+
   lower_bound <- sapply(datnew$age_interval, function(x) {x %>% str_split(",") %>% unlist %>% nth(1) %>% 
       gsub("\\[|\\]", "", .) %>%
       gsub("\\(|\\)", "", .) %>%
