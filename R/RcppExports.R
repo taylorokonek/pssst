@@ -13,7 +13,7 @@ rcpp_gradient_multi <- function(x_df, log_shapes, log_scales, dist) {
     .Call(`_pssst_rcpp_gradient_multi`, x_df, log_shapes, log_scales, dist)
 }
 
-rcpp_loglik_multi <- function(x_df, num_periods, log_shapes, log_scales, dist, breakpoints, par_period_id, etsp_c = 0, force_nonincreasing) {
+rcpp_loglik_multi <- function(x_df, num_periods, log_shapes, log_scales, dist, breakpoints, par_period_id, etsp_c = 0, force_nonincreasing = FALSE) {
     .Call(`_pssst_rcpp_loglik_multi`, x_df, num_periods, log_shapes, log_scales, dist, breakpoints, par_period_id, etsp_c, force_nonincreasing)
 }
 
@@ -49,7 +49,7 @@ rcpp_f_gompertz <- function(x, rate, shape, give_log) {
     .Call(`_pssst_rcpp_f_gompertz`, x, rate, shape, give_log)
 }
 
-rcpp_hazard_integral <- function(lower_bound, upper_bound, log_shape, log_scale_vec, dist, breakpoints, etsp_c = 0.0, force_nonincreasing) {
+rcpp_hazard_integral <- function(lower_bound, upper_bound, log_shape, log_scale_vec, dist, breakpoints, etsp_c = 0.0, force_nonincreasing = FALSE) {
     .Call(`_pssst_rcpp_hazard_integral`, lower_bound, upper_bound, log_shape, log_scale_vec, dist, breakpoints, etsp_c, force_nonincreasing)
 }
 
