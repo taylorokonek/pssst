@@ -25,6 +25,8 @@ surv_synthetic(
   dist = "weibull",
   breakpoints = NA,
   init_vals = NA,
+  method = "BFGS",
+  control = list(),
   etsp_c = 0,
   force_nonincreasing = FALSE
 )
@@ -88,6 +90,10 @@ set breakpoints = c(0,1,12), or breakpoints = c(1,12).}
 \item{init_vals}{an optional vector of initial values at which to start the optimizer for the
 parameters. Must specify the appropriate number of parameters for the given distribution /
 number of periods.}
+
+\item{method}{The method to be used in the \code{optim} call. Defaults to "BFGS".}
+
+\item{control}{Optional list of control parameters passed to \code{optim}.}
 
 \item{etsp_c}{if "etsp" distribution is used, the value to set the c parameter equal to. Defaults to 0.}
 

@@ -74,6 +74,8 @@
 #' @param init_vals an optional vector of initial values at which to start the optimizer for the 
 #' parameters. Must specify the appropriate number of parameters for the given distribution /
 #' number of periods.
+#' @param method The method to be used in the \code{optim} call. Defaults to "BFGS".
+#' @param control Optional list of control parameters passed to \code{optim}.
 #' @param etsp_c if "etsp" distribution is used, the value to set the c parameter equal to. Defaults to 0.
 #' @param force_nonincreasing a boolean, specifying (for the log-logistic and piecewise exponential 
 #' distributions) whether to force the hazard to be non-increasing across age. Defaults to FALSE. This option
@@ -124,6 +126,8 @@ surv_synthetic <- function(df,
                            dist = "weibull",
                            breakpoints = NA,
                            init_vals = NA,
+                           method = "BFGS",
+                           control = list(),
                            etsp_c = 0,
                            force_nonincreasing = FALSE) {
   
@@ -347,7 +351,8 @@ surv_synthetic <- function(df,
                        dist = dist,
                        breakpoints = breakpoints,
                        num_periods = n_periods,
-                       method = "BFGS",
+                       method = method,
+                       control = control,
                        hessian = TRUE)
     end_time <- Sys.time()
     
@@ -393,7 +398,8 @@ surv_synthetic <- function(df,
                          dist = dist,
                          breakpoints = breakpoints,
                          num_periods = n_periods,
-                         method = "BFGS",
+                         method = method,
+                         control = control,
                          hessian = TRUE)
       end_time <- Sys.time()
       
@@ -438,7 +444,8 @@ surv_synthetic <- function(df,
                          dist = dist,
                          breakpoints = breakpoints,
                          num_periods = n_periods,
-                         method = "BFGS",
+                         method = method,
+                         control = control,
                          hessian = TRUE)
       end_time <- Sys.time()
       
@@ -484,7 +491,8 @@ surv_synthetic <- function(df,
                          breakpoints = breakpoints,
                          force_nonincreasing = force_nonincreasing,
                          num_periods = n_periods,
-                         method = "BFGS",
+                         method = method,
+                         control = control,
                          hessian = TRUE)
       end_time <- Sys.time()
       
@@ -522,7 +530,8 @@ surv_synthetic <- function(df,
                          dist = dist,
                          breakpoints = breakpoints,
                          num_periods = n_periods,
-                         method = "BFGS",
+                         method = method,
+                         control = control,
                          hessian = TRUE)
       end_time <- Sys.time()
       
@@ -559,7 +568,8 @@ surv_synthetic <- function(df,
                          dist = dist,
                          breakpoints = breakpoints,
                          num_periods = n_periods,
-                         method = "BFGS",
+                         method = method,
+                         control = control,
                          hessian = TRUE)
       end_time <- Sys.time()
       
@@ -596,7 +606,8 @@ surv_synthetic <- function(df,
                          dist = dist,
                          breakpoints = breakpoints,
                          num_periods = n_periods,
-                         method = "BFGS",
+                         method = method,
+                         control = control,
                          hessian = TRUE)
       end_time <- Sys.time()
       
@@ -633,7 +644,8 @@ surv_synthetic <- function(df,
                          dist = dist,
                          breakpoints = breakpoints,
                          num_periods = n_periods,
-                         method = "BFGS",
+                         method = method,
+                         control = control,
                          hessian = TRUE,
                          etsp_c = etsp_c)
       end_time <- Sys.time()
@@ -673,7 +685,8 @@ surv_synthetic <- function(df,
                          breakpoints = breakpoints,
                          force_nonincreasing = force_nonincreasing,
                          num_periods = n_periods,
-                         method = "BFGS",
+                         method = method,
+                         control = control,
                          hessian = TRUE)
       end_time <- Sys.time()
       
@@ -709,7 +722,8 @@ surv_synthetic <- function(df,
                        dist = dist,
                        breakpoints = breakpoints,
                        num_periods = n_periods,
-                       method = "BFGS",
+                       method = method,
+                       control = control,
                        hessian = TRUE)
     end_time <- Sys.time()
     
