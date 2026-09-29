@@ -172,11 +172,12 @@ format_dhs <- function(df,
   
   # if right_censor_time specified and they reached this age before min(year), remove them
   if (!is.na(right_censor_time)) {
+    birth_dates <- suppressWarnings((paste(births$year_born, births$month_born, sep = "-") %>% ym()))
     right_censored_dates_new <- birth_dates %m+% months(right_censor_time)
-    censored_before_new <- which(right_censored_dates_new <= ym(paste0(min(year_cut), "-01")))
-    if (length(censored_before_new) > 0) {
-      message(paste0("Removing ", length(censored_before_new), " children who would be right censored at age ",right_censor_time," before ", min(year_cut)))
-      births <- births[-censored_before_new,]
+    censored_before_new <- right_censored_dates_new <= ym(paste0(min(year_cut), "-01"))
+    if (sum(censored_before_new) > 0) {
+      message(paste0("Removing ", sum(censored_before_new), " children who would be right censored at age ",right_censor_time," before ", min(year_cut)))
+      births <- births[!censored_before_new,]
     }
   }
   
